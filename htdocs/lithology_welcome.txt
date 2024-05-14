@@ -1,0 +1,14 @@
+<p>
+  This well lithology graphing tool presents wellbore data collected by the driller and 
+  tabulated by Oregon Water Resources Department (OWRD). The U.S. Geological Survey (USGS)
+  and OWRD are providing these data so the
+  user can quickly focus on a point of interest and examine it
+  further.
+</p> 
+<p>
+  Users are cautioned to consider the nature of the information
+  presented here before making decisions using it that concern personal
+  or public safety or the conduct of business that involves substantial
+  monetary or operational consequences.  Some data is provisional and
+  may be subject to revision.
+</p>

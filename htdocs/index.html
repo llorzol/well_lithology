@@ -1,0 +1,147 @@
+<!DOCTYPE html> 
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+ <meta charset="utf-8">
+ <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+ <meta name="viewport" content="width=device-width,initial-scale=1.0">
+ 
+ <title id="title">USGS Well Lithology Grapher</title>
+
+  <!-- css -->
+  <!--#include virtual="DrupalVisID/includes/meta-css.html" -->
+  <!--#include virtual="includes/css_inc.html" -->
+  <!-- end css -->
+ 
+</head>
+
+<body id="offwhite">
+
+  <!--#include virtual="DrupalVisID/includes/header_WRET.html"-->
+
+  <!-- Container Section -->         
+  <div id="about" class="container">
+
+    <!-- Page Heading/Breadcrumbs -->
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="clear title title_top">U.S. Geological Survey</div>
+        <div class="clear title title_2">USGS Well Lithology Grapher</div>
+      </div>
+    </div>
+    <!-- End Page Heading/Breadcrumbs -->             
+
+     <!-- Accordion -->
+     <div class="row">
+       <div class="col-sm-12">
+         <div class="accordion" id="accordionExample">
+
+           <div class="accordion-item">
+             <h2 class="accordion-header" id="heading1">
+               <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1" aria-expanded="true" aria-controls="collapseOne">
+                 Introduction
+               </button>
+             </h2>
+             <div id="collapse1" class="accordion-collapse collapse" aria-labelledby="heading1" data-bs-parent="#accordionExample">
+               <div class="accordion-body">
+                 <span id="welcome_text"></span>
+               </div>
+             </div>
+           </div>
+
+           <div class="accordion-item">
+             <h2 class="accordion-header" id="headingTwo">
+               <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                 General Instructions
+               </button>
+             </h2>
+             <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
+               <div class="accordion-body">
+                 <span id="general_instructions_text"></span>
+               </div>
+             </div>
+           </div>
+
+
+           <div class="accordion-item">
+             <h2 class="accordion-header" id="heading4">
+               <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4" aria-expanded="false" aria-controls="collapse4">
+                 Contact
+               </button>
+             </h2>
+             <div id="collapse4" class="accordion-collapse collapse" aria-labelledby="heading4" data-bs-parent="#accordionExample">
+               <div class="accordion-body">
+                 <span id="contacts_text"></span>
+               </div>
+             </div>
+           </div>
+
+         </div>
+       </div>
+     </div>
+
+    <!-- Nav Bar Container-->
+    <div class="row spacemetop">
+      <div class="col-sm-12">
+        <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+          <div class="container-fluid">
+            <a class="navbar-brand" href="https://www.usgs.gov"><img class="hydrographLogo" src="images/hydrographLogo.png"></a>
+            <div class="navbar-brand me-auto">USGS-OWRD Well Lithology Grapher</div>
+          </div>
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+
+              <!--Download-->
+              <li class="nav-item">
+                <a class="nav-link" href="#">
+                  <span id="downloadHelp" data-tooltip="on" data-placement="bottom">
+                    Download Data
+                  </span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+        </nav>
+      </div>
+    </div>
+
+
+    <!-- Cell Log -->
+    <div class="row spacemetop">
+      <div class="col-sm-12">
+        <svg id="svgCanvas"></svg>
+      </div>
+    </div>
+
+  </div> <!-- <div class="container-fluid"> -->
+
+    <div class="row">
+      <div class="clearfix">
+        <br />
+        <!--#include virtual="DrupalVisID/includes/footer_WRET.html"-->
+      </div>
+    </div>
+
+  <!--[if IE]><script language="javascript" type="text/javascript" src="javascripts/flot/excanvas.min.js"></script><![endif]-->
+  <script language="javascript" type="text/javascript" src="javascripts/required/jquery.min.js"></script>
+  <script language="javascript" type="text/javascript" src="javascripts/required/jquery.url.js"></script>
+
+  <!-- Latest compiled and minified JavaScript -->
+  <script language="javascript" type="text/javascript" src="javascripts/required/tether.min.js"></script>
+  <script language="javascript" type="text/javascript" src="javascripts/required/bootstrap.min.js"></script>
+
+  <!-- d3 scripts -->
+  <script language="javascript" type="text/javascript" src="javascripts/required/d3.min.js"></script>
+
+ <!-- Oregon WSC routines -->
+ <script language="javascript" type="text/javascript" src="javascripts/usgs/modal.js"></script>
+ <script language="javascript" type="text/javascript" src="javascripts/usgs/webRequest.js"></script>
+ <script language="javascript" type="text/javascript" src="javascripts/usgs/downloadData.js"></script>
+ <script language="javascript" type="text/javascript" src="javascripts/usgs/d3.AxisFunctions.js"></script>
+ <script language="javascript" type="text/javascript" src="javascripts/usgs/d3.lithology.js"></script>
+ <script language="javascript" type="text/javascript" src="javascripts/usgs/lithologyService.js"></script>
+ <script language="javascript" type="text/javascript" src="javascripts/usgs/main.js"></script>
+
+ </body>
+</html>

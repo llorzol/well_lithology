@@ -1,0 +1,26 @@
+<div class="tutorials">
+ <div class="featureText">
+
+  <div class="text" id="zoom_period_plot">
+   <p> Well Lithology Plot </p> 
+   <p><img src="images/well_lithology.png"> </p> 
+   <ul>
+    <li>
+     Use this plot to investigate well lithology information that has been 
+     collected at a site.
+    </li>
+    <li>
+     Hovering the cursor over a lithology in the wellbore column will toggle a popup 
+     that will show the description 
+     and depth information about the specific lithology.
+    </li>
+    <li>
+     Hovering the cursor over the text in the explanation section will highlight 
+     matching lithology interval observed in the well bore information.
+    </li>
+   </ul>
+  </div>
+
+ </div>
+</div>
+
