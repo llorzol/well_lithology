@@ -4,8 +4,8 @@
  * Main is a JavaScript library to provide a set of functions to manage
  *  the web requests.
  *
- * version 3.16
- * January 18, 2024
+ * version 3.17
+ * June 2, 2024
 */
 
 /*
@@ -103,219 +103,159 @@ var aboutFiles     = {
                       "welcome_text" :              "lithology_welcome.txt",
                       "general_instructions_text" : "lithology_Features.txt",
                       "contacts_text" :             "lithology_contacts.txt"
-                     };
-
+};
 
 // Prepare when the DOM is ready 
 //
 $(document).ready(function() 
   {
-   // Loading message
-   //
-   message = "Processing lithology information ";
-   openModal(message);
-   console.log(message);
-  
-   // Insert accordion text
-   //
-   jQuery.each(aboutFiles, function(keyItem, keyFile) {
-  
+    // Loading message
+    //
+    message = "Processing lithology information ";
+    openModal(message);
+    console.log(message);
+
+    // Insert accordion text
+    //
+    jQuery.each(aboutFiles, function(keyItem, keyFile) {
+
       var InfoText = loadText(keyFile);
-  
+
       jQuery("#" + keyItem).html(InfoText);
-  
-   });
-      
-   // Current url
-   //-------------------------------------------------
-   var url     = new URL(window.location.href);  
-   console.log("Current Url " + window.location.href);
-     
-   // Parse
-   //-------------------------------------------------
-   coop_site_no = url.searchParams.get("coop_site_no");
-   station_nm   = url.searchParams.get("station_nm");
-   latitude     = url.searchParams.get("latitude");
-   longitude    = url.searchParams.get("longitude");
-   lsdelev      = url.searchParams.get("lsdelev");
-   lsdaccuracy  = url.searchParams.get("lsdaccuracy");
-   lsdelevdatum = url.searchParams.get("lsdelevdatum");
 
-   console.log("coop_site_no for " + coop_site_no);
-   if(!coop_site_no)
-     {
-         message = "No Cooperator Site Number provided ";
-         openModal(message);
-         fadeModal(2000);
+    });
 
-         return;
-     }
+    // Current url
+    //-------------------------------------------------
+    var url     = new URL(window.location.href);
+    //console.log("Current Url " + window.location.href);
 
-      // Build ajax requests
-      //
-      console.log("Requesting OWRD site and lithology information for " + coop_site_no);
-      
-      var county_nm  = coop_site_no.slice(0,4);
-      var pad        = "0000000";
-      var county_no  = coop_site_no.slice(5).trim();
+    // Parse
+    //-------------------------------------------------
+    coop_site_no = url.searchParams.get("coop_site_no");
 
-      gw_logid       = county_nm + (pad + county_no).slice(-pad.length);
+    coop_site_no = checkCoopSiteNo(coop_site_no);
 
-   // Build ajax requests
-   //
-   var webRequests  = [];
+    if(!coop_site_no)
+    {
+      var message = "Incorrectly formatted OWRD well log ID: ";
+      message    += "You must use the OWRD well log ID, which has a four-character county abbrevation ";
+      message    += "along with from 1 to 7 padded digit well number.";
+      openModal(message);
+      fadeModal(2000);
 
-   // Request for site information
-   //
-   var request_type = "GET";
-   var script_http  = 'https://apps.wrd.state.or.us/apps/gw/gw_data_rws/api/' + gw_logid + '/gw_site_summary/?public_viewable=Y'
-   var data_http    = '';
-   var dataType     = "json";
-      
-   // Web request
-   //
-   webRequests.push($.ajax( {
-                             method:   request_type,
-                             url:      script_http, 
-                             data:     data_http, 
-                             dataType: dataType
-   }));
+      return;
+    }
 
-   // Request for lithology lookup information
-   //
-   var request_type = "GET";
-   var script_http  = 'data/' + lookupFile
-   var data_http    = '';
-   var dataType     = "json";
-      
-   // Web request
-   //
-   webRequests.push($.ajax( {
-                             method:   request_type,
-                             url:      script_http, 
-                             data:     data_http, 
-                             dataType: dataType
-   }));
+    // Build ajax requests
+    //
+    console.log("Requesting OWRD site and lithology information for " + coop_site_no);
 
-   // Request for site lithology information
-   //	
-   var request_type = "GET";
-   var script_http  = 'https://apps.wrd.state.or.us/apps/gw/gw_data_rws/api/' + gw_logid + '/gw_lithology/'
-   var data_http    = '';
-   var dataType     = "json";
-      
-   // Web request
-   //
-   webRequests.push($.ajax( {
-                             method:   request_type,
-                             url:      script_http, 
-                             data:     data_http, 
-                             dataType: dataType
-   }));
+    var county_nm  = coop_site_no.slice(0,4);
+    var pad        = "0000000";
+    var county_no  = coop_site_no.slice(5).trim();
 
-   // Run ajax requests
-   //
-   var j       = 0;
-   $.when.apply($, webRequests).then(function() {
-        console.log('Responses');
-        //console.log("Responses length " + arguments.length);
-        //console.log(arguments);
+    gw_logid       = county_nm + (pad + county_no).slice(-pad.length);
 
-        // Retrieve site information
-        //
-        var i = 0;
-        if(arguments.length > 0)
-          {
-           var myInfo  = arguments[i];
-           //console.log("arguments " + i);
-           //console.log(arguments[i]);
+    // Build ajax requests
+    //
+    var webRequests  = [];
 
-           if(myInfo[1] === "success")
-             {
-              // Loading message
-              //
-              message = "Processed site information";
-              openModal(message);
-              fadeModal(2000);
+    // Request for site information
+    //
+    var request_type = "GET";
+    var script_http  = 'https://apps.wrd.state.or.us/apps/gw/gw_data_rws/api/' + gw_logid + '/gw_site_summary/?public_viewable=Y'
+    var data_http    = '';
+    var dataType     = "json";
 
-                 LithologyInfo = processOwrdSiteService(myInfo[0]);
-             }
-            else
-             {
-              // Loading message
-              //
-              message = "Failed to load site information";
-              openModal(message);
-              fadeModal(2000);
-              return false;
-             }
-          }
-
-        // Retrieve lithology lookup information
-        //
-        i++;
-        console.log("Retrieve lithology lookup information ");
-        //console.log(arguments[i]);
-        if(arguments.length > i)
-          {
-           var myInfo = arguments[i];
-
-           if(myInfo[1] === "success")
-             {
-              // Loading message
-              //
-              message = "Processed lithology lookup information";
-              openModal(message);
-              fadeModal(2000);
-
-              lithLookup = processLithLookup(myInfo[0]);
-             }
-            else
-             {
-              // Loading message
-              //
-              message = "Failed to load lithology lookup information";
-              openModal(message);
-              fadeModal(2000);
-              return false;
-             }
-          }
-
-        // Retrieve site lithology information
-        //
-        i++;
-        console.log("Retrieve site lithology " + i);
-        //console.log(arguments[i]);
-        if(arguments.length > i)
-          {
-           var myInfo = arguments[i];
-
-           if(myInfo[1] === "success")
-             {
-              // Loading message
-              //
-              message = "Processed site lithology information";
-              openModal(message);
-              fadeModal(2000);
-
-              processOwrdLithService(myInfo[0]);
-             }
-            else
-             {
-              // Loading message
-              //
-              message = "Failed to load basin boundary information";
-              openModal(message);
-              fadeModal(2000);
-              return false;
-             }
-          }
-
-        //console.log("done with main");
+    // Web request
+    //
+    webRequests.push($.ajax( {
+      method:   request_type,
+      url:      script_http,
+      data:     data_http,
+      dataType: dataType,
+      success: function (myData) {
+        message = "Processed site information";
+        openModal(message);
         fadeModal(2000);
+        LithologyInfo = processOwrdSiteService(myData);
+        //console.log(`mySiteData ${mySiteData}`);
+      },
+      error: function (error) {
+        message = `Failed to load site information ${error}`;
+        openModal(message);
+        fadeModal(2000);
+        return false;
+      }
+    }));
 
-        plotLithology(LithologyInfo);
-   });
+    // Request for lithology lookup information
+    //
+    var request_type = "GET";
+    var script_http  = 'data/' + lookupFile
+    var data_http    = '';
+    var dataType     = "json";
+
+    // Web request
+    //
+    webRequests.push($.ajax( {
+      method:   request_type,
+      url:      script_http,
+      data:     data_http,
+      dataType: dataType,
+      success: function (myData) {
+        message = "Processed lithology lookup information";
+        openModal(message);
+        fadeModal(2000);
+        lithLookup = processLithLookup(myData);
+        //console.log(`mySiteData ${mySiteData}`);
+      },
+      error: function (error) {
+        message = `Failed to load lithology lookup information ${error}`;
+        openModal(message);
+        fadeModal(2000);
+        return false;
+      }
+    }));
+
+    // Request for site lithology information
+    //
+    var request_type = "GET";
+    var script_http  = 'https://apps.wrd.state.or.us/apps/gw/gw_data_rws/api/' + gw_logid + '/gw_lithology/'
+    var data_http    = '';
+    var dataType     = "json";
+
+    // Web request
+    //
+    webRequests.push($.ajax( {
+      method:   request_type,
+      url:      script_http,
+      data:     data_http,
+      dataType: dataType,
+      success: function (myData) {
+        message = "Processed site lithology information";
+        openModal(message);
+        fadeModal(2000);
+        processOwrdLithService(myData);
+        //console.log(`mySiteData ${mySiteData}`);
+      },
+      error: function (error) {
+        message = `Failed to load site lithology information ${error}`;
+        openModal(message);
+        fadeModal(2000);
+        return false;
+      }
+    }));
+
+    // Run ajax requests
+    //
+    $.when.apply($, webRequests).then(function() {
+
+      fadeModal(2000);
+
+      plotLithology(LithologyInfo);
+    });
   });
 
 // Load text
