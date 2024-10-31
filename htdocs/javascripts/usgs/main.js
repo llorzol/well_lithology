@@ -4,8 +4,8 @@
  * Main is a JavaScript library to provide a set of functions to manage
  *  the web requests.
  *
- * version 3.17
- * June 2, 2024
+ * version 3.18
+ * October 13, 2024
 */
 
 /*
@@ -37,6 +37,14 @@
 jQuery('.noJump a').click(function(event){
    event.preventDefault();
 });
+
+// Log4js
+//
+let myLogger = new Log4js.getLogger("consoleTest");
+myLogger.setLevel(Log4js.Level.DEBUG);
+//myLogger.setLevel(Log4js.Level.INFO);
+let consoleAppender = new Log4js.ConsoleAppender(true);
+myLogger.addAppender(consoleAppender);
 
 // Global variables
 //
