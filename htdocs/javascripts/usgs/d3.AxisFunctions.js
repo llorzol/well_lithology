@@ -4,8 +4,8 @@
  * d3_AxisFunctions is a JavaScript library to provide a set of functions to build
  *  axes and labelling for well construction and lithology applications in svg format.
  *
- * version 1.18
- * August 20, 2020
+ * version 2.07
+ * October 13, 2024
 */
 
 /*
@@ -36,7 +36,7 @@
 //
 function addToolTip()
   { 
-   console.log("addToolTip");
+   myLogger.debug("addToolTip");
   
    // Add tooltip
    //
@@ -45,6 +45,24 @@ function addToolTip()
                    .attr("class", "toolTip");
 
    return tooltip;
+  }
+
+// No information
+//
+function noLog(svgContainer, label_txt)
+  { 
+   myLogger.debug("noLog");
+
+   // No log label
+   //
+   var  label      = "translate("
+   label          += [( x_box_max + x_box_min ) * 0.5, + (y_box_max + y_box_min ) * 0.5].join(", ");
+   label          += ") rotate(-90)";
+
+   var myText      = svgContainer.append("text")
+                                 .attr("transform", label)
+                                 .attr('class', 'y_axis_label')
+                                 .text(label_txt);
   }
 
 // Axis Box
@@ -58,24 +76,102 @@ function axisBox(
                  fill
                 )
   { 
-   console.log("axesBox");
+    myLogger.debug("axesBox");
+    myLogger.debug(`x_box_min ${x_box_min} x_box_max ${x_box_max} y_box_min ${y_box_min} y_box_max ${y_box_max}`);
 
-   // Draw the Rectangle
-   //
-   var rectangle = svgContainer.append("g")
-                               .append("rect")
-                               .attr("x", x_box_min)
-                               .attr("y", y_box_min)
-                               .attr("width", x_box_max- x_box_min)
-                               .attr("height", y_box_max)
-                               .attr("stroke", "black")
-                               .attr("strokeWidth", 2)
-                               .attr("fill", fill);
+    // Draw the Rectangle
+    //
+    var rectangle = svgContainer.append("g")
+        .append("rect")
+        .attr("x", x_box_min)
+        .attr("y", y_box_min)
+        .attr("width", Math.abs(x_box_max - x_box_min))
+        .attr("height", Math.abs(y_box_max - y_box_min))
+        .attr("stroke", "black")
+        .attr("strokeWidth", 2)
+        .attr("fill", fill);
   }
 
-// Label y axes
+// X axis
 //
-function leftAxis(
+function xAxis(
+                  svgContainer,
+                  x_box_min, 
+                  x_box_max, 
+                  y_box_min,
+                  y_box_max,
+                  x_min,
+                  x_max,
+                  axis_side,
+                  axis_label
+                 )
+  {
+    myLogger.debug("xAxis");
+    myLogger.debug(`x_box_min ${x_box_min} x_box_max ${x_box_max} y_box_min ${y_box_min} y_box_max ${y_box_max}`);
+    myLogger.debug(`x_min ${x_min} x_max ${x_max} axis_side ${axis_side} axis_label ${axis_label}`);
+
+    // Bottom axis
+    //
+    var width = Math.abs(x_box_max - x_box_min);
+    let scale = d3.scaleLinear().domain([x_min, x_max]).rangeRound([0, width]);
+
+    // Tic values
+    //
+    var tickFormat = ".0f";
+
+    // X axis
+    //
+    if(axis_side.toLowerCase() == 'top') {
+      var graph = svgContainer.append("g")
+          .attr("transform", "translate(" + x_box_min + "," + y_box_min + ")");
+
+      // Top axis
+      //
+      var theAxis = graph.append("g")
+          .attr("class", "axis axis--x")
+          .call(d3.axisTop(thisAxis).tickSizeOuter(0).ticks(5).tickFormat(d3.format(tickFormat)))
+    }
+    else {
+      var graph = svgContainer.append("g")
+          .attr("transform", "translate(" + x_box_max + "," + y_box_min + ")");
+
+      // Bottom axis
+      //
+      var theAxis = graph.append("g")
+          .attr("class", "axis axis--x")
+          .call(d3.axisBottom(thisAxis).tickSizeOuter(0).ticks(5).tickFormat(d3.format(tickFormat)))
+
+      // Determine text width for label placement
+      //
+      var text_label  = String(max);
+      var text_length = text_label.length;
+      myLogger.debug(`text_label ${text_label}`);
+
+      var myText      = svgContainer.append("text")
+          .attr("class", "tic_labels")
+          .text(text_label);
+      var textInfo    = textSize(myText)
+      var text_height = textInfo.height;
+
+      // Axis label
+      //
+      var labelOffset = text_height * 4
+      var label       = "translate("
+      label          += [(x_box_max + x_box_min ) * 0.5, y_box_max + labelOffset].join(", ");
+      label          += ")";
+
+      var axis_label = svgContainer.append("g")
+          .append("text")
+          .attr("transform", label)
+          .attr("text-anchor", "middle")
+          .attr('class', 'x_axis_label')
+          .text(axis_label);
+    }
+}
+
+// Y axis
+//
+function yAxis(
                   svgContainer,
                   x_box_min, 
                   x_box_max, 
@@ -83,136 +179,81 @@ function leftAxis(
                   y_box_max,
                   y_min,
                   y_max,
-                  y_interval,
+                  axis_side,
                   axis_label
                  )
   { 
-   console.log("leftAxis");
-  
-   // Y axis
-   //
-   var height = y_box_max - y_box_min;
-   var yAxis  = d3.scaleLinear().rangeRound([height, 0]);
+    myLogger.debug("yAxis");
+    myLogger.debug(`x_box_min ${x_box_min} x_box_max ${x_box_max} y_box_min ${y_box_min} y_box_max ${y_box_max}`);
+    myLogger.debug(`y_min ${y_min} y_max ${y_max} axis_side ${axis_side} axis_label ${axis_label}`);
 
-   yAxis.domain([y_max, y_min]); 
-    
-   // Tic values
-   //
-   var tickValuesList = [];
-   var tickFormat     = ".0f";
-   var y              = y_min;
-   while ( y <= y_max ) {
-        var tic_value = d3.format(tickFormat)(y);
-        tickValuesList.push(tic_value);
-        y            += y_interval;
-   }
+    // Y axis
+    //
+    var height   = Math.abs(y_box_max - y_box_min);
+    var thisAxis = d3.scaleLinear().domain([y_min, y_max]).rangeRound([0, height]);
 
-   // Graph
-   //
-   var graph = svgContainer.append("g")
-                           .attr("transform", "translate(" + x_box_min + "," + y_box_min + ")");
+    // Tic format
+    //
+    var tickFormat     = ".0f";
 
-   // Y axis
-   //
-   var yaxis = graph.append("g")
-                    .attr("class", "axis axis--y")
-                    .call(d3.axisLeft(yAxis).tickValues(tickValuesList).tickFormat(d3.format(tickFormat)))
+    // Y axis
+    //
+    if(axis_side.toLowerCase() == 'left') {
+      var graph = svgContainer.append("g")
+          .attr("transform", "translate(" + x_box_min + "," + y_box_min + ")");
 
-   // Determine text width for label placement
-   //
-   var text_label  = String(y_max);
-   var text_length = text_label.length;
+      // Left axis
+      //
+      var theAxis = graph.append("g")
+          .attr("class", "axis axis--y")
+          .call(d3.axisLeft(thisAxis).tickSizeOuter(0).ticks(5).tickFormat(d3.format(tickFormat)))
+    }
+    else {
+      var graph = svgContainer.append("g")
+          .attr("transform", "translate(" + x_box_max + "," + y_box_min + ")");
 
-   var myText      = svgContainer.append("text")
-                                 .attr("class", "tic_labels")
-                                 .text(text_label);
-   var text_width  = myText.node().getComputedTextLength() / text_label.length;
+      // Right axis
+      //
+      var theAxis = graph.append("g")
+          .attr("class", "axis axis--y")
+          .call(d3.axisRight(thisAxis).tickSizeOuter(0).ticks(5).tickFormat(d3.format(tickFormat)))
+    }
 
-   // Left axis label
-   //
-   var labelOffset = ( text_length + 3 ) * text_width;
-   var label       = "translate("
-   label          += [x_box_min - labelOffset, (y_box_max + y_box_min ) * 0.5].join(", ");
-   label          += ") rotate(-90)";
+    // Determine text width for label placement
+    //
+    var text_label  = String(y_max);
+    var text_length = text_label.length;
+    if(String(y_min).length > text_length) {
+      text_label  = String(y_min);
+      text_length = text_label.length;
+    }
+    myLogger.debug(`text_label ${text_label}`);
 
-   var left_axis_label = svgContainer.append("g")
-                                     .append("text")
-                                     .attr("transform", label)
-                                     .attr('class', 'y_axis_label')
-                                     .text(axis_label);
+    var myText      = svgContainer.append("text")
+        .attr("class", "tic_labels")
+        .text(text_label);
+    var textInfo    = textSize(myText)
+    var text_width  = textInfo.width / text_label.length;
+
+    // Left axis label
+    //
+    var labelOffset = text_width * text_length
+    var label       = "translate("
+    if(axis_side.toLowerCase() == 'left') {
+      label += [x_box_min - labelOffset, (y_box_max + y_box_min ) * 0.5].join(", ");
+    }
+    else {
+      label += [x_box_max + labelOffset, (y_box_max + y_box_min ) * 0.5].join(", ");
+    }
+    label          += ") rotate(-90)";
+
+    var y_axis_label = svgContainer.append("g")
+        .append("text")
+        .attr("transform", label)
+        .attr('class', 'y_axis_label')
+        .attr("text-anchor", "middle")
+        .text(axis_label);
   }
-
-// Label y axes
-//
-function rightElevationAxis(
-                            svgContainer,
-                            x_box_min, 
-                            x_box_max, 
-                            y_box_min,
-                            y_box_max,
-                            y_min,
-                            y_max,
-                            y_interval,
-                            axis_label,
-                            altitude_accuracy
-                           )
-  { 
-   console.log("rightElevationAxis");
-  
-   // Y axis
-   //
-   var height = y_box_max - y_box_min;
-   var yAxis  = d3.scaleLinear().rangeRound([height, 0]);
-
-   yAxis.domain([y_min, y_max]); 
-    
-   // Tic values
-   //
-   var tickValuesList = [];
-   var tickFormat     = "." + altitude_accuracy + "f";
-   var y              = y_max;
-   while ( y >= y_min ) {
-        var tic_value = d3.format(tickFormat)(y);
-        tickValuesList.push(tic_value);
-        y            -= y_interval;
-   }
-
-   // Graph
-   //
-   var graph = svgContainer.append("g")
-                           .attr("transform", "translate(" + x_box_max + "," + y_box_min + ")");
-
-   // Y axis
-   //
-   var yaxis = graph.append("g")
-                    .attr("class", "axis axis--y")
-                    .call(d3.axisRight(yAxis).tickValues(tickValuesList).tickFormat(d3.format(tickFormat)))
-
-   // Determine text width for label placement
-   //
-   var text_label  = String(y_max);
-   var text_length = text_label.length;
-
-   var myText      = svgContainer.append("text")
-                                 .attr("class", "tic_labels")
-                                 .text(text_label);
-   var text_width  = myText.node().getComputedTextLength() / text_label.length;
-   console.log("text_width " + text_width);
-
-   // Axis label
-   //
-   var labelOffset = ( text_length + 5 ) * text_width;
-   var label       = "translate("
-   label          += [x_box_max + labelOffset, (y_box_max + y_box_min ) * 0.5].join(", ");
-   label          += ") rotate(90)";
-
-   var axis_label  = svgContainer.append("g")
-                                 .append("text")
-                                 .attr("transform", label)
-                                 .attr('class', 'y_axis_label')
-                                 .text(axis_label);
-  }
-
 
 // Label wellbore column
 //
@@ -227,71 +268,75 @@ function labelWellboreDiameter(
                                axis_label
                               )
   { 
-   console.log("labelWellboreDiameter");
+    myLogger.debug("labelWellboreDiameter");
+    myLogger.debug(`x_box_min ${x_box_min} x_box_max ${x_box_max} y_box_min ${y_box_min} y_box_max ${y_box_max}`);
 
-   var tic_labels  = svgContainer.append("g")
-                                 .attr("class", "x_tic_labels")
+    var tic_labels  = svgContainer.append("g")
+        .attr("class", "x_tic_labels")
 
-   x_range         = x_max - x_min;
-   var max_label   = String(x_max).length;
-   var tic_offset  = ( String(x_max).length + 1 ) * text_size;
+    x_range         = x_max - x_min;
+    var max_label   = String(x_max).length;
+    var tic_offset  = ( String(x_max).length + 1 ) * text_size;
 
-   // Draw x tics and labels
-   //
-   var tics        = svgContainer.append("g")
-                                 .attr("id", "tics")
-                                 .attr("stroke", "black")
-                                 .attr("strokeWidth", 1)
+    // Draw x tics and labels
+    //
+    var tics        = svgContainer.append("g")
+        .attr("id", "tics")
+        .attr("stroke", "black")
+        .attr("strokeWidth", 1)
 
-   // Tic labels
-   //
-   label_txt       = String(x_max);
-   label_x         = x_box_min;
-   label_y         = y_box_max + y_box_min + text_size * 1.50;
+    // Tic labels
+    //
+    label_txt       = String(x_max);
+    label_x         = x_box_min;
+    label_y         = y_box_max + text_size * 1.50;
 
-   var myText      = tic_labels.append("text")
-                               .attr('x', label_x)
-                               .attr('y', label_y)
-                               .attr('class', 'x_tic_labels')
-                               .text(label_txt);
-    
-   label_x         = x_box_max;
+    var myText      = tic_labels.append("text")
+        .attr('x', label_x)
+        .attr('y', label_y)
+        .attr('class', 'x_tic_labels')
+        .text(label_txt);
 
-   var myText      = tic_labels.append("text")
-                               .attr('x', label_x)
-                               .attr('y', label_y)
-                               .attr('class', 'x_tic_labels')
-                               .text(label_txt);
-    
-   // Zero
-   //
-   var x_mid       = ( x_box_max + x_box_min ) * 0.5;
+    label_x         = x_box_max;
 
-   var myLine      = tics.append("line")
-                         .attr("x1", x_mid)
-                         .attr("y1", y_box_max + y_box_min)
-                         .attr("x2", x_mid)
-                         .attr("y2", y_box_max + y_box_min - 10)
-    
-   label_txt        = String(0);
-   label_x          = x_mid;
+    var myText      = tic_labels.append("text")
+        .attr('x', label_x)
+        .attr('y', label_y)
+        .attr("text-anchor", "middle")
+        .attr('class', 'x_tic_labels')
+        .text(label_txt);
 
-   var myText       = tic_labels.append("text")
-                                .attr('x', label_x)
-                                .attr('y', label_y)
-                                .attr('class', 'x_tic_labels')
-                                .text(label_txt);
-    
-   // X axis label
-   //
-   label_x          = x_mid;
-   label_y          = y_box_max + y_box_min + text_size * 4;
+    // Zero
+    //
+    var x_mid       = ( x_box_max + x_box_min ) * 0.5;
 
-   var myText       = tic_labels.append("text")
-                                .attr('x', label_x)
-                                .attr('y', label_y)
-                                .attr('class', 'x_axis_label')
-                                .text(axis_label);
+    var myLine      = tics.append("line")
+        .attr("x1", x_mid)
+        .attr("y1", y_box_max)
+        .attr("x2", x_mid)
+        .attr("y2", y_box_max - 10)
+
+    label_txt        = String(0);
+    label_x          = x_mid;
+
+    var myText       = tic_labels.append("text")
+        .attr('x', label_x)
+        .attr('y', label_y)
+        .attr("text-anchor", "middle")
+        .attr('class', 'x_tic_labels')
+        .text(label_txt);
+
+    // X axis label
+    //
+    label_x          = x_mid;
+    label_y          = y_box_max + text_size * 4;
+
+    var myText       = tic_labels.append("text")
+        .attr('x', label_x)
+        .attr('y', label_y)
+        .attr("text-anchor", "middle")
+        .attr('class', 'x_axis_label')
+        .text(axis_label);
   }
 
 
@@ -378,7 +423,21 @@ function get_max_min( min_value, max_value)
    return [min_value, max_value, interval];
   }
 
+function textSize(text) {
+  let container = d3.select('body').append('svg');
 
+  container.append('text')
+    .style("font-size", "9px")      // todo: these need to be passed to the function or a css style
+    .style("font-family", "sans-serif")
+    .text(text);
+
+  let sel = container.selectAll('text').node()
+  let width = sel.getComputedTextLength()
+  let height = sel.getExtentOfChar(0).height
+  container.remove()
+  
+  return {width, height}
+}
 
 
 
@@ -409,7 +468,7 @@ function leftAxis2(
                   axis_label
                  )
   { 
-   console.log("leftAxis");
+   myLogger.debug("leftAxis");
 
    // Determine text width for label placement
    //
@@ -420,14 +479,14 @@ function leftAxis2(
                                  .attr("class", "tic_labels")
                                  .text(text_label);
    var text_width  = myText.node().getComputedTextLength() / text_label.length;
-   console.log("text_width " + text_width);
+   myLogger.debug("text_width " + text_width);
 
    // Draw y tics and labels
    //
    var y           = 0.0
    var y_range     = y_max - y_min;
    var y_axis      = y_box_max - y_box_min;
-   console.log("y_range " + y_range);
+   myLogger.debug("y_range " + y_range);
 
    var tics        = svgContainer.append("g")
                                  .attr("id", "tics")
@@ -456,7 +515,7 @@ function leftAxis2(
         y_label_txt      = String(y);
         label_x          = x_box_min - text_width;
         label_y          = y_tic + text_width * 0.50;
-        //console.log("Max Y " + y_max + " Y " + y);
+        //myLogger.debug("Max Y " + y_max + " Y " + y);
 
         var myText       = tic_labels.append("text")
                                      .attr('x', label_x)
@@ -496,9 +555,9 @@ function rightAxis2(
                   altitude_accuracy
                  )
   { 
-   console.log("rightAxis");
-   console.log("y_min " + y_min);
-   console.log("y_max " + y_max);
+   myLogger.debug("rightAxis");
+   myLogger.debug("y_min " + y_min);
+   myLogger.debug("y_max " + y_max);
 
    // Determine text width for label placement
    //
@@ -515,14 +574,14 @@ function rightAxis2(
                                  .attr("class", "tic_labels")
                                  .text(text_label);
    var text_offset = myText.node().getComputedTextLength() / text_label.length;
-   console.log("text_offset " + text_offset);
+   myLogger.debug("text_offset " + text_offset);
 
    // Draw y tics and labels
    //
    var y           = y_max;
    var y_range     = y_max - y_min;
    var y_axis      = y_box_max - y_box_min;
-   console.log("y_range " + y_range);
+   myLogger.debug("y_range " + y_range);
 
    var tics        = svgContainer.append("g")
                                  .attr("id", "tics")
@@ -551,7 +610,7 @@ function rightAxis2(
         y_label_txt      = y.toFixed(altitude_accuracy);
         label_x          = x_box_max + ( text_length + 1 ) * text_offset;
         label_y          = y_tic + text_offset * 0.50;
-        console.log("Y " + y + " y_label_txt " + y_label_txt);
+        myLogger.debug("Y " + y + " y_label_txt " + y_label_txt);
 
         var myText       = tic_labels.append("text")
                                      .attr('x', label_x)
@@ -590,7 +649,7 @@ function label_YAxes(
                      y_interval
                     )
   { 
-   console.log("label_YAxes");
+   myLogger.debug("label_YAxes");
 
    // Determine text width for label placement
    //
@@ -601,7 +660,7 @@ function label_YAxes(
                                  .attr("class", "tic_labels")
                                  .text(text_label);
    var text_width  = myText.node().getComputedTextLength() / text_label.length;
-   console.log("text_width " + text_width);
+   myLogger.debug("text_width " + text_width);
 
    // Draw y tics and labels
    //
@@ -635,7 +694,7 @@ function label_YAxes(
         y_label_txt      = String(y);
         label_x          = x_box_min - text_width;
         label_y          = y_tic + text_width * 0.50;
-        //console.log("Max Y " + y_max + " Y " + y);
+        //myLogger.debug("Max Y " + y_max + " Y " + y);
 
         var myText       = tic_labels.append("text")
                                      .attr('x', label_x)
