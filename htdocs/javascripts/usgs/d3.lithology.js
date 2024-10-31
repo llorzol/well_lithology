@@ -4,8 +4,8 @@
  * D3_Lithology is a JavaScript library to provide a set of functions to build
  *  well lithology column in svg format.
  *
- * version 2.01
- * May 8, 2024
+ * version 2.04
+ * October 13, 2024
 */
 
 /*
@@ -39,7 +39,7 @@ var jsonData;
 var lithologyData;
 
 var y_box_min   = 50;
-var y_box_max   = 600;
+var y_box_max   = 650;
 var y_axis      = y_box_max - y_box_min;
 var x_box_min   = 75;
 var x_box_max   = x_box_min + 50;
@@ -89,6 +89,8 @@ function plotLithology(wellData)
    console.log("lithologyDefs");
    console.log(lithologyDefs);
    colorDefs                  = wellData.Color;
+   console.log("colorDefs");
+   console.log(colorDefs);
   
    // Plot specs
    //
@@ -130,9 +132,9 @@ function plotLithology(wellData)
 
    // No lithology information
    //
-   if(typeof lithologyData === "undefined")
+   if(!lithologyData)
      {
-      noLog(svg);
+      noLog(svg, 'No well lithology information');
   
       return false;
      }
@@ -159,35 +161,36 @@ function plotLithology(wellData)
                 tooltip
                )
 
-
-   // Label axes
+   // Left y axis
    //
-   leftAxis(
-            svg, 
-            x_box_min, 
-            x_box_max, 
-            y_box_min, 
-            y_box_max, 
-            y_min, 
-            y_max, 
-            y_interval, 
-            "Depth Below Land Surface, in feet"
-           );
+   yAxis(
+      svg,
+      x_box_min,
+      x_box_max,
+      y_box_min,
+      y_box_max,
+      y_min,
+      y_max,
+      'left',
+      "Depth Below Land Surface, in feet"
+    );
 
+   // Right y axis (elevation)
+   //
    var elevation_max = land_surface;
    var elevation_min = elevation_max - y_max;
-   rightElevationAxis(
-                      svg, 
-                      x_box_min, 
-                      x_box_max, 
-                      y_box_min, 
-                      y_box_max, 
-                      elevation_min, 
-                      elevation_max, 
-                      y_interval, 
-                      "Elevation, in feet",
-                      altitude_accuracy
-                     );
+
+    yAxis(
+      svg,
+      x_box_min,
+      x_box_max,
+      y_box_min,
+      y_box_max,
+      elevation_max,
+      elevation_min,
+      'right',
+      "Elevation, in feet"
+    );
   }
 
 function addLithology(
@@ -383,6 +386,7 @@ function addLegend(svgContainer, lithologyData, lithologyDefs)
         var url         = 'url(#' + id + ')'
 
         var myRect      = descriptions.append("rect")
+                                      .attr('class', lithCode)
                                       .attr('x', x_legend)
                                       .attr('y', y_top)
                                       .attr('width', legend_box)
@@ -390,6 +394,22 @@ function addLegend(svgContainer, lithologyData, lithologyDefs)
                                       .attr('fill', url)
                                       .attr('stroke', 'black')
                                       .attr('stroke-width', 1)
+                                      .on('mouseover', function(d, i) {
+                                         var lithClass = d3.select(this).attr('class');
+                                         d3.selectAll("#" + lithClass)
+                                           .transition()
+                                           .duration(100)
+                                           .attr('stroke-width', 4)
+                                           .attr('stroke', 'yellow')
+                                      })
+                                      .on('mouseout', function(d, i) {
+                                         var lithClass = d3.select(this).attr('class');
+                                         d3.selectAll("#" + lithClass)
+                                           .transition()
+                                           .duration(100)
+                                           .attr('stroke-width', 1)
+                                           .attr('stroke', 'black')
+                                      })
 
         var myText      = descriptions.append("text")
                                       .text(description)
@@ -401,7 +421,7 @@ function addLegend(svgContainer, lithologyData, lithologyDefs)
                                          d3.selectAll("#" + lithClass)
                                            .transition()
                                            .duration(100)
-                                           .attr('strokeWidth', 10)
+                                           .attr('stroke-width', 4)
                                            .attr('stroke', 'yellow')
                                       })
                                       .on('mouseout', function(d, i) {
@@ -409,7 +429,7 @@ function addLegend(svgContainer, lithologyData, lithologyDefs)
                                          d3.selectAll("#" + lithClass)
                                            .transition()
                                            .duration(100)
-                                           .attr('strokeWidth', 1)
+                                           .attr('stroke-width', 1)
                                            .attr('stroke', 'black')
                                       })
 
