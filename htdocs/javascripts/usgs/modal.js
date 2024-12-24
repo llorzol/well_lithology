@@ -32,8 +32,8 @@
 var modalDialog = [];
 
 //modalDialog.push('<!-- Modal -->');
-modalDialog.push('<div class="modal fade" id="messageDialog" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">');
-modalDialog.push('  <div class="modal-dialog" role="document">');
+modalDialog.push('<div class="modal fade" id="messageDialog" tabindex="-1" role="dialog"aria-labelledby="myModal" aria-hidden="true">>');
+modalDialog.push('  <div class="modal-dialog modal-dialog-centered"" role="document">');
 modalDialog.push('    <div class="modal-content">');
 //modalDialog.push('      <div class="modal-header">');
 //modalDialog.push('        <button type="button" class="close" data-dismiss="modal" aria-label="Close">');
@@ -49,11 +49,12 @@ modalDialog.push('  </div>');
 modalDialog.push('</div>');
 
 function openModal(message) {
-    //console.log("openModal " + jQuery('#messageDialog').length);
-    if (jQuery('#messageDialog').length < 1) {
-        jQuery('body').append(modalDialog.join('\n'));
-        //console.log("append openModal " + jQuery('#messageDialog').length);
+    console.log("openModal " + jQuery('#messageDialog').length);
+    if (jQuery('#messageDialog').length > 0) {
+        //jQuery('#messageDialog').remove()
+        jQuery('#messageDialog').text('')
     }
+    //jQuery('body').append(modalDialog.join('\n'));
 
     jQuery('#message').text(message);
 
@@ -72,5 +73,26 @@ function fadeModal(fadeTime) {
 }
 
 function updateModal(message) {
+	console.log(`updateModal ${message}`);
+    if (jQuery('#messageDialog').length < 1) {
+        jQuery('body').append(modalDialog.join('\n'));
+    }
+
     jQuery('#message').text(message);
+
+    jQuery('#messageDialog').modal('show');
+}
+
+function updateModal2(message) {
+	console.log(`updateModal ${message}`);
+    jQuery("#messageDialog").modal('hide');
+	$('#myModal').on('hide.bs.modal', function (e) {
+		console.log(`update ${message}`);
+		jQuery('span#message').text(message);
+	})
+    jQuery("#messageDialog").modal('show');
+	$('#myModal').on('hide.bs.modal', function (e) {
+		jQuery('span#message').text(message);
+	})
+	fadeModal(3000)
 }
