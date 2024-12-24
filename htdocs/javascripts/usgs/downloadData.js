@@ -4,8 +4,8 @@
  * downloadData is a JavaScript library to provide a set of functions to download
  *  site information and measurements.
  *
- * version 2.03
- * January 16, 2024
+ * version 3.01
+ * December 22, 2024
 */
 
 /*
@@ -46,11 +46,11 @@ jQuery("#downloadHelp").click(function()
     }
   else if(/lithology/i.test(pathname))
     {
-     downloadLithData(coop_site_no);
+     viewReport(agency_cd, site_no, coop_site_no, station_nm);
     }
   else if(/well_construction.html$/i.test(pathname))
     {
-     requestWellConstructionData(agency_cd, site_no, coop_site_no, station_nm);
+     viewReport(agency_cd, site_no, coop_site_no, station_nm);
     }
   else if(/discrete_wq/i.test(pathname))
     {
@@ -69,6 +69,40 @@ headerLines.push('# as provisional and are subject to revision. Provisional data
 headerLines.push('# condition that neither the USGS nor the United States Government may be held liable');
 headerLines.push('# for any damages resulting from its use.');
 headerLines.push('#');
+
+// Read parameter codes from NwisWeb
+//
+function viewReport(site_no, coop_site_no, station_nm) {
+
+    closeModal();
+
+    let messages = [];
+    if(coop_site_no)  { messages.push(`OWRD ${coop_site_no}`); }
+    if(site_no)  { messages.push(`USGS ${site_no}`); }
+    if(station_nm)  { messages.push(`Station ${station_nm}`); }
+
+    if(!coop_site_no) {
+        message = 'No Water Well Report available';
+        openModal(message);
+        fadeModal(3000);
+
+        return;
+    }
+
+    // Loading message
+    //
+    message = "Processing information for site " + messages.join(' ');
+    openModal(message);
+
+    // Request for site service information
+    //
+    //
+    let countyCode = coop_site_no.substring(0, 4).toUpperCase();
+    let countyNum  = parseInt(coop_site_no.substring(4));
+    let owrdReport = `https://apps.wrd.state.or.us/apps/misc/vault/vault.aspx?wl_county_code=${countyCode}&wl_nbr=${countyNum}`;
+
+    window.open(owrdReport, "_blank");
+  }
 
 // Read parameter codes from NwisWeb
 //
