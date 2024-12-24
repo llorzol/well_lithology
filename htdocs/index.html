@@ -1,7 +1,7 @@
 <!DOCTYPE html> 
 
-<!-- version 2.01 -->
-<!-- version_date October 31, 2024 -->
+<!-- version 3.04 -->
+<!-- version_date December 22, 2024 -->
 
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
@@ -9,13 +9,13 @@
  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
  <meta name="viewport" content="width=device-width,initial-scale=1.0">
  
- <title id="title">USGS Well Lithology Grapher</title>
+ <title id="title">USGS Well Lithology and Construction Grapher</title>
 
   <!-- css -->
   <!--#include virtual="DrupalVisID/includes/meta-css.html" -->
   <!--#include virtual="includes/css_inc.html" -->
   <!-- end css -->
- 
+
 </head>
 
 <body id="offwhite">
@@ -29,7 +29,7 @@
     <div class="row">
       <div class="col-sm-12">
         <div class="clear title title_top">U.S. Geological Survey</div>
-        <div class="clear title title_2">USGS Well Lithology Grapher</div>
+        <div class="clear title title_2">USGS Well Lithology and Construction Grapher</div>
       </div>
     </div>
     <!-- End Page Heading/Breadcrumbs -->             
@@ -84,12 +84,12 @@
      </div>
 
     <!-- Nav Bar Container-->
-    <div class="row spacemetop">
+    <div class="row pt-3">
       <div class="col-sm-12">
         <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
           <div class="container-fluid">
             <a class="navbar-brand" href="https://www.usgs.gov"><img class="hydrographLogo" src="images/hydrographLogo.png"></a>
-            <div class="navbar-brand me-auto">USGS-OWRD Well Lithology Grapher</div>
+            <div class="navbar-brand me-auto">USGS-OWRD Well Lithology and Construction Grapher</div>
           </div>
           <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav">
@@ -97,8 +97,8 @@
               <!--Download-->
               <li class="nav-item">
                 <a class="nav-link" href="#">
-                  <span id="downloadHelp" data-tooltip="on" data-placement="bottom">
-                    Download Data
+                  <span id="viewReport" data-tooltip="on" data-placement="bottom">
+                    View Water Well Report
                   </span>
                 </a>
               </li>
@@ -109,11 +109,20 @@
       </div>
     </div>
 
+    <!-- Cell Log -->
+    <div class="row pt-3">
+      <div class="col-sm-12">
+        <div id="wellBore">
+          <svg id="svgCanvas"></svg>
+        </div>
+      </div>
+    </div>
 
     <!-- Cell Log -->
-    <div class="row spacemetop">
-      <div class="col-sm-12">
-        <svg id="svgCanvas"></svg>
+    <div class="row pt-3">
+      <div id="printButton" class="col-sm-12">
+        <!-- <button id="downloadSVG" class="exportSvg" >Download Well Construction</button> -->
+        <button id="printSVG" class="printSvg border border-3 border-black-subtle rounded" >Print Well Construction</button>
       </div>
     </div>
 
@@ -138,7 +147,11 @@
   <script src="javascripts/required/d3.min.js"></script>
 
   <!-- log4js -->
-  <script src="javascripts/required/log4js.min.js"></script>
+  <script src="javascripts/required/loglevel.min.js"></script>
+
+  <!-- Definitions for lithology and well construction -->
+  <script src="data/lithology_lookup.json"></script>
+  <script src="data/well_construction_lookup.json"></script>
 
   <!-- Oregon WSC routines -->
   <script src="javascripts/usgs/urlArguments.js"></script>
@@ -147,6 +160,7 @@
   <script src="javascripts/usgs/downloadData.js"></script>
   <script src="javascripts/usgs/d3.AxisFunctions.js"></script>
   <script src="javascripts/usgs/d3.lithology.js"></script>
+  <script src="javascripts/usgs/d3.well_construction.js"></script>
   <script src="javascripts/usgs/lithologyService.js"></script>
   <script src="javascripts/usgs/main.js"></script>
 </body>
