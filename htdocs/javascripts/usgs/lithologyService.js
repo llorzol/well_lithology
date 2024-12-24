@@ -3,8 +3,8 @@
  * A JavaScript library to retrieve the lithology information
  * for a site(s).
  *
- * version 3.02
- * January 17, 2024
+ * version 3.23
+ * December 22, 2024
 */
 
 /*
@@ -30,420 +30,1214 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 */
+// Url components
+//
+//----------------------------------------------------
+
+var protocol     = window.location.protocol; // Returns protocol only
+var host         = window.location.host;     // Returns host only
+var pathname     = window.location.pathname; // Returns path only
+var url          = window.location.href;     // Returns full URL
+var origin       = window.location.origin;   // Returns base URL
+var webPage      = (pathname.split('/'))[1];
 
 // Functions
 //
 //----------------------------------------------------
 
-function processOwrdSiteService(myData)
-  {
-   console.log("processOwrdSiteService");
-   console.log(myData);
+// USGS sitefile fields
+//
+let myUsgsFields = [
+    'site_no',
+    'coop_site_no',
+    'agency_cd',
+    'agency_use_cd',
+    'alt_acy_va',
+    'alt_datum_cd',
+    'alt_meth_cd',
+    'alt_va',
+    'aqfr_cd',
+    'aqfr_type_cd',
+    'basin_cd',
+    'construction_dt',
+    'contrib_drain_area_va',
+    'coord_acy_cd',
+    'coord_datum_cd',
+    'coord_meth_cd',
+    'country_cd',
+    'county_cd',
+    'data_types_cd',
+    'dec_lat_va',
+    'dec_long_va',
+    'depth_src_cd',
+    'district_cd',
+    'drain_area_va',
+    'gw_file_cd',
+    'hole_depth_va',
+    'huc_cd',
+    'instruments_cd',
+    'inventory_dt',
+    'land_net_ds',
+    'lat_va',
+    'local_time_fg',
+    'long_va',
+    'map_nm',
+    'map_scale_fc',
+    'mcd_cd',
+    'nat_aqfr_cd',
+    'nat_water_use_cd',
+    'project_no',
+    'reliability_cd',
+    'site_rmks_tx',
+    'site_tp_cd',
+    'site_use_1_cd',
+    'site_use_2_cd',
+    'site_use_3_cd',
+    'site_web_cd',
+    'state_cd',
+    'station_ix',
+    'station_nm',
+    'topo_cd',
+    'tz_cd',
+    'water_use_1_cd',
+    'water_use_2_cd',
+    'water_use_3_cd',
+    'well_depth_va'
+];
 
-   // Parse for site information
-   //
-   var feature_count = myData.feature_count;
-   if(feature_count == 1)
-     {
-      var mySiteRecord = myData.feature_list[0];
-      for(var i = 0; i < mySiteFields.length; i++)
-         {
-          var myColumn            = mySiteFields[i];
-          var myValue             = mySiteRecord[myColumn];
-          if(myValue) { LithologyInfo[myColumn] = myValue; }
-          else { LithologyInfo[myColumn] = null; }
-         }
+function processUsgsSiteService(myData) {
+    myLogger.debug("processUsgsSiteService");
+    myLogger.debug(myData);
 
-      // Determine altitude accuracy
-      //
-      LithologyInfo['altitude_accuracy'] = 0;
-      if(LithologyInfo['lsd_elevation'])
-         {
-          var lsd_elevation     = LithologyInfo['lsd_elevation'];
-          var lsd_digits        = lsd_elevation.toString().split(".");
-          if(lsd_digits.length > 1)
-            {
-             LithologyInfo['altitude_accuracy'] = lsd_digits[1].length;
-            }
-         }
+    let mySiteInfo = null;
 
-      console.log(LithologyInfo);
-     }
+    // Parse for site information
+    //
+    let contentL = myData.trim().split(/\r\n|\r|\n/);
+    let myDataL  = [];
+    for(let i = 0; i < contentL.length; i++) {
+        if(!contentL[i].startsWith('#')) {
+            myDataL = contentL.slice(i);
+            break;
+        }
+    }
+    myLogger.debug('myDataL');
+    myLogger.debug(myDataL);
+    if(myDataL.length > 0) {
+        mySiteInfo = {};
+        let myKeyL = myDataL.shift();
+        let myKeys = myKeyL.split(/\t/);
+        myLogger.debug('myKeys');
+        myLogger.debug(myKeys);
+        
+        myDataL.shift(); // Remove line
+        
+        let myValuesL = myDataL.shift().split(/\t/);
+        myLogger.debug(myValuesL);
+        for(let i = 0; i < myKeys.length; i ++) {
+            let myValue = myValuesL[i];
+            if(!myValue) { myValue = null; }
+            mySiteInfo[myKeys[i]] = myValue;
+            myLogger.debug(`Site column ${myKeys[i]} ${mySiteInfo[myKeys[i]]} ${myValue}`);
+        }
+    }
+    myLogger.debug(mySiteInfo);
 
-   // No site information
-   //
-   else
-     {
-      // Loading message
-      //
-      message = "No OWRD site information for site " + coop_site_no;
-      openModal(message);
-      fadeModal(6000);
-     }
-
-   // return information
-   //
-   return LithologyInfo;
+    // Return information
+    //
+    return mySiteInfo;
   }
 
-function processLithLookup(myData)
-  {
-   console.log("processLithLookup");
-   console.log(myData);
+// Parse OWRD site information
+//
+var myOwrdFields  = {
+    'gw_logid' : 'coop_site_no',
+    'aquifer' : 'aqfr_type_cd',
+    'aquifer_description' : 'aqfr_cd',
+    'latitude_dec' : 'dec_lat_va',
+    'longitude_dec' : 'dec_long_va',
+    'lsd_elevation' : 'alt_va',
+    'elevation_datum' : 'alt_datum_cd',
+    'primary_use' : 'water_use_1_cd',
+    'state_observation_well_nbr' : 'site_use_1_cd',
+    'observation_status' : 'site_use_2_cd',
+    'observation_type' :  'site_use_3_cd',
+    'usgs_pls_notation_display' : 'station_nm',
+    'water_level_count' : 'site_rmks_tx',
+    'max_depth' : 'hole_depth_va'
+};
 
-   lithLookup = myData.lithology;
+function processOwrdSiteService(myData) {
+    myLogger.debug("processOwrdSiteService");
+    myLogger.debug(myData);
 
-   return lithLookup;
+    let mySiteInfo = null;
+
+    // Parse for site information
+    //
+    let feature_count = myData.feature_count;
+    if(feature_count == 1) {
+        mySiteInfo = {};
+        let myKeys       = Object.keys(myOwrdFields);
+        let mySiteRecord = myData.feature_list[0];
+        myLogger.debug(mySiteRecord);
+        for(let myColumn of myKeys) {
+            let myValue = mySiteRecord[myColumn];
+            let usgsColumn = myOwrdFields[myColumn];
+            if(!myValue) { myValue = null; }
+            if(myUsgsFields.includes(usgsColumn)) { mySiteInfo[usgsColumn] = myValue; }
+            myLogger.debug(`Site column ${myColumn} ${usgsColumn} ${mySiteInfo[usgsColumn]} ${myValue}`);
+        }
+    }
+    myLogger.debug(mySiteInfo);
+
+    // Return information
+    //
+    return mySiteInfo;
   }
 
-function processOwrdLithService(myData)
-  {
-   console.log("processOwrdLithService");
-   console.log(myData);
+// Parse OWRD lithology information
+//
+var myOwrdLithFields  = [
+    'site_number',
+    'start_depth',
+    'end_depth',
+    'lithology',
+    'lithology_description',
+    'color',
+    'water_bearing_zone',
+    'water_bearing_zone_water_level'
+];
 
-   var ColorHash      = {};
+function processOwrdLithService(myData, lithologyDefs) {
+    myLogger.info("processOwrdLithService");
+    myLogger.debug(myData);
+    myLogger.debug(lithologyDefs);
 
-   var max_depth_flag = LithologyInfo.max_depth;
-   var max_depth      = 0;
+    myLithology     = null;
+    myLegend        = [];
+    LegendList      = [];
+    myColors        = {};
 
-   var myRgbTest      = /^rgb\(0, 0, 0/;
-   var myRgbaTest     = /^rgba\(0, 0, 0, 0\)/;
+    maxDepth        = null;
 
-   // Parse for site information
-   //
-   var feature_count = myData.feature_count;
-   if(feature_count > 0)
-     {
-      var myLithRecords = myData.feature_list;
-      for(var i = 0; i < myLithRecords.length; i++)
-         {
-          var LithRecord = {};
-          for(var ii = 0; ii < myLithFields.length; ii++)
-             {
-              var myColumn            = myLithFields[ii];
-              var myValue             = myLithRecords[i][myColumn];
-              if(typeof myValue !== "undefined") { LithRecord[myColumn] = myValue; }
-              else { LithRecord[myColumn] = null; }
-            }
+    let myRgbTest   = /^rgb\(0, 0, 0/;
+    let myRgbaTest  = /^rgba\(0, 0, 0, 0\)/;
 
-          // Set max depth if needed
-          //
-          if(! max_depth_flag && typeof LithRecord['end_depth'] !== "undefined")
-            {
-             max_depth = LithRecord['end_depth'];
-            }
-          console.log("max_depth " + max_depth + " -> " + LithRecord['end_depth']);
+    // Parse for lithology information
+    //
+    let feature_count = myData.feature_count;
+    if(feature_count > 0) {
+        myLithology = [];
+        let myLithRecords = myData.feature_list;
+        for(let i = 0; i < myLithRecords.length; i++) {
 
-          // Split lithology
-          //
-          var myLiths = LithRecord['lithology_description'].split(" ");
-          console.log("Lithology " + myLiths);
+            // Valid record if seal has depth
+            //
+            if(isNumeric(myLithRecords[i].start_depth) || isNumeric(myLithRecords[i].end_depth)) {
 
-          // Set color
-          //
-          LithRecord['color'] = '';
-          for(var ii = 0; ii < myLiths.length; ii++)
-             {
-                 var myColor = myLiths[ii];
-                 console.log("Color " + myLiths[ii] + " -> " + colorLookup[myLiths[ii]])
-                 if(myColor == '&') { continue; }
-                 if(!colorLookup[myLiths[ii]])
-                    {
-                        $('<div class="' + myLiths[ii] + '"></div>').appendTo("body");
-                        var myRgb = $('.' + myLiths[ii]).css('background-color');
-                        console.log(myColor + ' -> ' + myRgb);
-                        var myType = typeof myRgb;
-                        console.log('Type -> ' + myType);
-                        console.log(myRgbTest.test(myRgb));
-                        if(myRgb == 'rgb(0, 0, 0)') { continue; }
-                        else if(myRgb == 'rgba(0, 0, 0, 0)') { continue; }
-                        else if(typeof myRgb === 'undefined') { continue; }
-                        else if(myRgb == 'transparent') { continue; }
-                        else
-                        {
-                            LithRecord['color']  = myColor;
-                            colorLookup[myColor] = 1;
+                // Set
+                //
+                let top_depth    = myLithRecords[i].start_depth;
+                let bot_depth    = myLithRecords[i].end_depth;
+                let lithology    = myLithRecords[i].lithology;
+                let description  = myLithRecords[i].lithology_description;
+                let color        = null;
+                let symbol       = '000.svg';
+
+                // Maximum depth
+                //
+                if(bot_depth) { maxDepth = bot_depth; }
+
+                // Adjust lithology capitalization
+                //
+                lithology = lithology.charAt(0).toUpperCase() + lithology.substring(1).toLowerCase()
+
+                // Adjust lithology description capitalization
+                //
+                // color modifier lithology
+                //   |      |        |
+                // Gray  Broken    Lava
+                //
+                let myLiths = description.split(" ");
+                for(let ii = 0; ii < myLiths.length; ii++) {
+                    myLiths[ii] = myLiths[ii][0].toUpperCase() + myLiths[ii].substring(1).toLowerCase();
+                }
+
+                description = myLiths.join(' ');
+                myLogger.debug(`Lithology ${description}`);
+
+                // If primary lithology matches existing lithology definitions
+                //
+                if(lithologyDefs[lithology]) {
+                    myLogger.debug(`  Primary lithology ${lithology} pattern ${lithologyDefs[lithology]}`)
+                    symbol = lithologyDefs[lithology];
+                }
+
+                // If lithology description matches existing lithology definitions [no color or modifier]
+                //
+                if(lithologyDefs[description]) {
+                    myLogger.debug(`  Lithology description ${description} pattern ${lithologyDefs[description]}`)
+                    lithology = description;
+                    symbol    = lithologyDefs[description];
+                }
+
+                // Search for a matching definition with full lithology description
+                //   skipping color and modifier
+                //
+                else {
+                    myLogger.debug(`  Lithology description ${description}`);
+
+                    // Set lithology if determined
+                    //
+                    let myLiths     = [];
+                    let lithologies = description.split(' ');
+                    for(let ii = 0; ii < lithologies.length; ii++) {
+                        let myLith = lithologies[ii]
+
+                        if(myLith == '&') { continue; }
+
+                        // An existing lithology definition
+                        //
+                        if(lithologyDefs[myLith]) {
+                            myLogger.debug(`    Lith ${myLith} -> ${lithologyDefs[myLith]}`);
+                            if(!myLiths.includes(myLith)) {
+                                myLiths.push(myLith);
+                            }
+                        }
+
+                        // No lithology definition or color or modifier
+                        //
+                        else {
+                            myLogger.debug(`    Lith ${myLith} -> missing`);
+                        }
+                    }
+
+                    // Check for an existing definition for more than 1 lithologies
+                    //
+                    let myLithology = myLiths.join(" & ");
+                    myLogger.debug(`    Combined Lithology description ${myLithology}`);
+                    if(lithologyDefs[myLithology]) {
+                        myLogger.debug(`      Lithology description ${myLithology} pattern ${lithologyDefs[myLithology]}`);
+                        lithology = myLithology;
+                        symbol    = lithologyDefs[myLithology];
+                    }
+                    else {
+                        myLogger.error(`      Combined Lithology description ${myLithology} needs pattern`);
+                    }
+
+                    // Set color if determined
+                    //
+                    for(let ii = 0; ii < lithologies.length; ii++) {
+                        let myColor = lithologies[ii]
+                        if(myColor == '&') { continue; }
+                        if(!myColors[myColor]) {
+                            $('<div class="' + myColor + '"></div>').appendTo("body");
+                            let myRgb = $('.' + myColor).css('background-color');
+                            $('.' + myColor).remove();
+                            let myType = typeof myRgb;
+                            myLogger.debug(`Color ${myColor} Background-color ${myRgb} Type -> ${myType}`);
+                            myLogger.debug(myRgbTest.test(myRgb));
+                            if(myRgb == 'rgb(0, 0, 0)') { continue; }
+                            else if(myRgb == 'rgba(0, 0, 0, 0)') { continue; }
+                            else if(!myRgb) { continue; }
+                            else if(myRgb == 'transparent') { continue; }
+                            else {
+                                color = myRgb;
+                                myColors[myColor] = myRgb;
+                                break;
+                            }
+                        }
+                        else {
+                            color = myColors[myColor];
+                            //LithRecord['color']  = myColors[myColor];
                             break;
                         }
                     }
-                 else
-                    {
-                     LithRecord['color']  = myColor;
-                     break;
-                    }
-            }
-          console.log("Lith color " + LithRecord['color']);
+                }
 
-          // Set lithology
-          //
-          var myLith        = [];
-          LithRecord['svg'] = '000';
-          for(var ii = 0; ii < myLiths.length; ii++)
-             {
-                 console.log("Lith " + myLiths[ii] + " -> " + lithLookup[myLiths[ii]])
-                 if(typeof lithLookup[myLiths[ii]] !== "undefined")
-                 {
-                     console.log(lithLookup[myLiths[ii]])
-                     LithRecord['svg'] = lithLookup[myLiths[ii]];
-                     if(!myLith.indexOf(myLiths[ii]) > -1)
-                     {
-                        myLith.push(myLiths[ii]);
-                     }
-                 }
-            }
-          LithRecord['lithology'] = myLith.join(" & ");
-          console.log("Lithology -> " + LithRecord['lithology']);
-          console.log("Lithology lookup -> " + lithLookup[LithRecord['lithology']]);
-          console.log(" ");
-          if(typeof lithLookup[LithRecord['lithology']] !== "undefined")
-            {
-             LithRecord['svg'] = lithLookup[LithRecord['lithology']];
-            }
+                let id = lithology.replace(/\s+&\s+/g, '');
 
-          LithologyInfo['WellLithology'].push(LithRecord);
+                // Set lithology
+                //
+                myLithology.push({
+                    'id' : id,
+                    'top_depth': parseFloat(top_depth),
+                    'bot_depth' : parseFloat(bot_depth),
+                    'description': description,
+                    'symbol' : symbol,
+                    'color' : color                   
+                });
+                myLogger.info(`Final Lithology lithology ${lithology} pattern ${symbol} color ${color}`);
 
-          // Set lithology defintions
-          //
-          if(!LithologyInfo['Lithology'].indexOf({'lithology': LithRecord['lithology'], 'symbol': LithRecord['svg'] }) > -1)
-            {
-             LithologyInfo['Lithology'].push({'lithology': LithRecord['lithology'], 'symbol': LithRecord['svg'] })
+                // Build legend
+                //
+                if(LegendList.indexOf(lithology) < 0) {
+                    LegendList.push(lithology);
+                    myLegend.push({
+                        'id': id,
+                        'description': lithology,
+                        'symbol': symbol
+                    });
+                }
             }
-         }
-
-      // Set max depth if needed
-      //
-      if(!max_depth_flag)
-        {
-         LithologyInfo.max_depth = max_depth;
-         console.log("max_depth " + max_depth + " -> " + LithRecord['max_depth']);
         }
-     }
+    }
 
-   // No site information
-   //
-   else
-     {
-      // Loading message
-      //
-      message = "No OWRD lithology information for site " + coop_site_no;
-      openModal(message);
-      fadeModal(6000);
-     }
-  }
+    return [myLithology, myLegend, maxDepth];
+}
 
 
+function processUsgsLithService(myData, lithologyDefs) {
+    myLogger.info("processUsgsLithService");
+    myLogger.info(myData);
+    myLogger.debug(lithologyDefs);
+
+    myLithology     = null;
+    myLegend        = [];
+    LegendList      = [];
+    myColors        = {};
+
+    maxDepth        = null;
+
+    var myRgbTest   = /^rgb\(0, 0, 0/;
+    var myRgbaTest  = /^rgba\(0, 0, 0, 0\)/;
+
+    // Parse for lithology information
+    //
+    if(myData.gw_geoh) {
+        myLithology = [];
+        let myLithRecords = myData.gw_geoh;
+        for(let i = 0; i < myLithRecords.length; i++) {
+
+            // Set
+            //
+            let top_depth    = myLithRecords[i].lith_top_va;
+            let bot_depth    = myLithRecords[i].lith_bottom_va;
+            let lithology    = myLithRecords[i].lith_ds;
+            let description  = myLithRecords[i].lith_unit_ds;
+            let color        = null;
+            let symbol       = '000.svg';
+            
+            // Maximum depth
+            //
+            if(top_depth) { maxDepth = top_depth; }
+            if(bot_depth) { maxDepth = bot_depth; }
+
+            // Adjust lithology description capitalization
+            //
+            // color modifier lithology
+            //   |      |        |
+            // Gray  Broken    Lava
+            //
+            myLiths = lithology.split(' ');
+            for(let ii = 0; ii < myLiths.length; ii++) {
+                myLiths[ii] = myLiths[ii][0].toUpperCase() + myLiths[ii].substring(1).toLowerCase();
+            }
+            lithology = myLiths.join(' ');
+            
+            myLiths = [lithology, `-- ${description}`].join(' ').split(' ');
+            for(let ii = 0; ii < myLiths.length; ii++) {
+                myLiths[ii] = myLiths[ii][0].toUpperCase() + myLiths[ii].substring(1).toLowerCase();
+            }
+            
+            let lithology_description = myLiths.join(' ');
+            myLogger.info(`Lithology description ${lithology_description}`);
+            myLogger.info(`Lithology ${lithology}`);
+            
+            // If primary lithology matches existing lithology definitions
+            //
+            if(lithologyDefs[lithology]) {
+                myLogger.debug(`  Primary lithology ${lithology} pattern ${lithologyDefs[lithology]}`)
+                symbol = lithologyDefs[lithology];
+            }
+            
+            // If lithology description matches existing lithology definitions [no color or modifier]
+            //
+            if(lithologyDefs[description]) {
+                myLogger.debug(`  Lithology description ${lithology_description} pattern ${lithologyDefs[lithology_description]}`)
+                lithology = lithology_description;
+                symbol    = lithologyDefs[lithology_description];
+            }
+
+            // Search for a matching definition with full lithology description
+            //   skipping color and modifier
+            //
+            else {
+                myLogger.debug(`  Lithology description ${lithology_description}`);
+
+                // Set lithology if determined
+                //
+                let myLiths     = [];
+                let lithologies = lithology_description.split(' ');
+                for(let ii = 0; ii < lithologies.length; ii++) {
+                    let myLith = lithologies[ii]
+                    
+                    if(myLith == '&') { continue; }
+
+                    // An existing lithology definition
+                    //
+                    if(lithologyDefs[myLith]) {
+                        myLogger.debug(`    Lith ${myLith} -> ${lithologyDefs[myLith]}`);
+                        if(!myLiths.includes(myLith)) {
+                            myLiths.push(myLith);
+                        }
+                    }
+
+                    // No lithology definition or color or modifier
+                    //
+                    else {
+                        myLogger.debug(`    Lith ${myLith} -> missing`);
+                    }
+                }
+                
+                // Check for an existing definition for more than 1 lithologies
+                //
+                let myLithology = myLiths.join(" & ");
+                myLogger.debug(`    Combined Lithology description ${myLithology}`);
+                if(lithologyDefs[myLithology]) {
+                    myLogger.debug(`      Lithology description ${myLithology} pattern ${lithologyDefs[myLithology]}`);
+                    lithology = myLithology;
+                    symbol    = lithologyDefs[myLithology];
+                }
+                else {
+                    myLogger.error(`      Combined Lithology description ${myLithology} needs pattern`);
+                }
+
+                // Set color if determined
+                //
+                for(let ii = 0; ii < lithologies.length; ii++) {
+                    let myColor = lithologies[ii]
+                    if(myColor == '&') { continue; }
+                    if(!myColors[myColor]) {
+                        $('<div class="' + myColor + '"></div>').appendTo("body");
+                        let myRgb = $('.' + myColor).css('background-color');
+                        $('.' + myColor).remove();
+                        let myType = typeof myRgb;
+                        myLogger.debug(`Color ${myColor} Background-color ${myRgb} Type -> ${myType}`);
+                        myLogger.debug(myRgbTest.test(myRgb));
+                        if(myRgb == 'rgb(0, 0, 0)') { continue; }
+                        else if(myRgb == 'rgba(0, 0, 0, 0)') { continue; }
+                        else if(!myRgb) { continue; }
+                        else if(myRgb == 'transparent') { continue; }
+                        else {
+                            color  = myRgb;
+                            myColors[myColor] = myRgb;
+                            break;
+                        }
+                    }
+                    else {
+                        color  = myColors[myColor];
+                        //LithRecord['color']  = myColors[myColor];
+                        break;
+                    }
+                }
+            }
+
+            let id = lithology.replaceAll(/\W/g, '');
+
+            // Set lithology
+            //
+            myLithology.push({
+                'id' : id,
+                'top_depth': parseFloat(top_depth),
+                'bot_depth' : parseFloat(bot_depth),
+                'description': `${lithology} -- ${description}`,
+                'symbol' : symbol,
+                'color' : color
+            });
+            myLogger.info(`Final Lithology ${lithology} description ${lithology_description} pattern ${svg} color ${color}`);
+
+            // Build legend
+            //
+            if(!LegendList.includes(lithology)) {
+                LegendList.push(lithology);
+                myLegend.push({
+                    'id': id,
+                    'description': lithology,
+                    'symbol': symbol
+                });
+            }
+        }
+        
+    }
+
+    return [myLithology, myLegend, maxDepth];
+}
 
 
+function processConstructionDefintions(constructionDefs) {
+    myLogger.debug("processConstructionDefintions");
+    myLogger.debug(constructionDefs);
 
+    // Prepare seal attributes
+    //
+    let sealRecords = constructionDefs.seal_cd.Codes;
+    myLogger.debug(sealRecords);
+    let sealDict   = {};
+    for(myCode in sealRecords) {
+        var Record = sealRecords[myCode];
+        sealDict[Record[0]] = Record[1];
+    }
+    myLogger.debug(sealDict);
 
+    return {sealDict};
+}
 
-
-
-
-
-
+// Process OWRD construction into NWIS construction
 //
-// Not needed below
+function processOwrdConstructionService(myData, constructionDefs) {
+    myLogger.info("processOwrdConstructionService");
+    myLogger.debug(myData);
+    myLogger.debug(constructionDefs);
+
+    // Output construction components
+    //
+    let myConstruction = null;
+
+    // Set construction components
+    //
+    let gw_cons  = null;
+    let gw_hole  = null;
+    let gw_csng  = null;
+    let gw_open  = null;
+    let minDia   = 99999.99;
+    let maxDia   = 0.0
+    let maxDepth = 0.0
+    
+    let LegendList = [];
+    let Legend     = [];
+
+    // Prepare seal attributes
+    //
+    let sealDict = constructionDefs.seal_cd.Codes;
+    myLogger.debug('Seal');
+    myLogger.debug(sealDict);
+
+    // Prepare casing attributes
+    //
+    let csngDict = constructionDefs.csng_material_cd.Codes;
+    myLogger.debug('Casing');
+    myLogger.debug(csngDict);
+
+    // Prepare open-interval attributes
+    //
+    let openDict = constructionDefs.open_cd.Codes;
+    myLogger.debug('Open-interval');
+    myLogger.debug(openDict);
+
+    // Parse for site information
+    //
+    var feature_count = myData.feature_count;
+    if(feature_count > 0) {
+
+        let cons_seq_nu = 0;
+
+        // Loop through records
+        //
+        for(let i = 0; i < feature_count; i++) {
+            let Record            = myData.feature_list[i];
+            let feature_type_desc = Record.feature_type_desc.toLowerCase();
+            myLogger.debug(Record);
+            
+            cons_seq_nu += 1;
+
+            // Seal
+            //
+            if(feature_type_desc == 'seal') {
+
+                // Valid record if seal has depth
+                //
+                if(isNumeric(Record.bottom_depth_ft)) {
+                    let bottom_depth = Record.bottom_depth_ft;
+                    let description  = Record.interval_material;
+                    let color        = "#ED9EE9";
+                    let symbol       = null;
+
+                    if(!description) { description = "Other"; }
+                    else {
+                        let wordL = description.split(/\s+/);
+                        for(let i = 0; i < wordL.length; i++) {
+                            wordL[i] = wordL[i].charAt(0).toUpperCase() + wordL[i].substring(1).toLowerCase();
+                        }
+                        description = wordL.join(' ');
+                        if(sealDict[description]) { color = sealDict[description]; }
+                        else {
+                            myLogger.error(`OWRD Seal material ${description} no NWIS code`);
+                        }
+                    }
+
+                    let id = `Seal_${description.toLowerCase().replace(/\s+/g, '')}`;
+
+                    // Push record
+                    //
+                    if(!gw_cons) { gw_cons = []; }
+                    gw_cons.push({
+                        'id' : id,
+                        'bottom_depth' : bottom_depth,
+                        'description' : description,
+                        'symbol': null,
+                        'color': color
+                    });
+                    //                gw_hole.push({
+                    //                    'cons_seq_nu' : gw_cons.length,
+                    //                    'hole_seq_nu' : gw_hole.length + 1,
+                    //                    'hole_top_va' : myRecord.top_depth_ft,
+                    //                    'hole_bottom_va' : myRecord.bottom_depth_ft,
+                    //                    'hole_dia_va' : myRecord.diameter
+                    //                });
+
+                    // Max/min depth
+                    //
+                    if(bottom_depth > maxDepth) { maxDepth = bottom_depth; }
+
+                    // Prepare legend
+                    //
+                    let legendEntry   = ["Seal,", description].join(" ");
+
+                    if(!LegendList.includes(legendEntry)) {
+                        LegendList.push(legendEntry);
+
+                        Legend.push({
+                            'id': id,
+                            'description': legendEntry,
+                            'symbol': null,
+                            'color': color
+                        })
+                    }
+                }
+            }
+
+            // Casing
+            //
+            if(feature_type_desc == 'casing') {
+
+                // Valid record if has top/bottom depths and diameter
+                //
+                if(isNumeric(Record.top_depth_ft) && isNumeric(Record.bottom_depth_ft) && isNumeric(Record.diameter)) {
+                    let top_depth    = Record.top_depth_ft;
+                    let bottom_depth = Record.bottom_depth_ft;
+                    let diameter     = Record.diameter;
+                    let description  = Record.interval_material;
+                    
+                    let color        = "#ED9EE9";
+                    let symbo        = null;
+
+                    if(!description) { description = "Unknown"; }
+                    else {
+                        let wordL = description.split(/\s+/);
+                        for(let i = 0; i < wordL.length; i++) {
+                            wordL[i] = wordL[i].charAt(0).toUpperCase() + wordL[i].substring(1).toLowerCase();
+                        }
+                        description = wordL.join(' ');
+                        if(csngDict[description]) { color = csngDict[description]; }
+                        else {
+                            myLogger.error(`USGS Casing material ${description} no NWIS code`);
+                        }
+                    }
+
+                    let id = `Casing_${description.toLowerCase().replace(/\s+/g, '')}`;
+
+                    // Push record
+                    //
+                    if(!gw_csng) { gw_csng = []; }
+                    gw_csng.push({
+                        'id' : id,
+                        'top_depth' : top_depth,
+                        'bottom_depth' : bottom_depth,
+                        'diameter' : diameter,
+                        'description' : description,
+                        'symbol': null,
+                        'color': color
+                    });
+                    if(!gw_hole) { gw_hole = []; }
+                    gw_hole.push({
+                        'id' : 1,
+                        'top_depth' : top_depth,
+                        'bottom_depth' : bottom_depth,
+                        'diameter' : diameter,
+                        'symbol' : null,
+                        'color' : 'white',
+                    });
+
+                    // Max/min diameter and depth
+                    //
+                    if(diameter < minDia) { minDia = diameter; }
+                    if(diameter > maxDia) { maxDia = diameter; }
+                    if(bottom_depth > maxDepth) { maxDepth = bottom_depth; }
+
+                    // Build legend
+                    //
+                    let legendEntry = ["Casing,", description].join(" ")
+
+                    if(!LegendList.includes(legendEntry)) {
+                        LegendList.push(legendEntry);
+                        Legend.push({
+                            'id': id,
+                            'description': legendEntry,
+                            'symbol': null,
+                            'color': color
+                        });
+                    }
+                }
+            }
+
+            // Open-interval
+            //
+            if(feature_type_desc == 'open interval') {
+
+                // Valid record if has top/bottom depths
+                //
+                myLogger.info(`Open-interval depth ${isNaN(Record.bottom_depth_ft)}`);
+                if(isNumeric(Record.top_depth_ft) && isNumeric(Record.bottom_depth_ft)) {
+
+                    let top_depth        = Record.top_depth_ft;
+                    let bottom_depth     = Record.bottom_depth_ft;
+                    let diameter         = Record.diameter;
+                    let description      = Record.interval_material;
+                    
+                    let color            = null;
+                    let symbol           = '001.svg';
+
+                    if(!description) { open_ds = "Unknown"; }
+                    else {
+                        let wordL = description.split(/\s+/);
+                        for(let i = 0; i < wordL.length; i++) {
+                            wordL[i] = wordL[i].charAt(0).toUpperCase() + wordL[i].substring(1).toLowerCase();
+                        }
+                        description = wordL.join(' ');
+                        if(openDict[description]) { symbol = openDict[description]; }
+                        else {
+                            myLogger.error(`USGS Casing material ${description} no NWIS code`);
+                        }
+                    }
+
+                    if(description.includes('Open')) {
+                        if(!gw_hole) { gw_hole = []; }
+                        gw_hole.push({
+                            'id' : 1,
+                            'top_depth' : top_depth,
+                            'bottom_depth' : bottom_depth,
+                            'diameter' : diameter,
+                            'symbol' : null,
+                            'color' : 'white',
+                        });
+                    }
+
+                    let id = `Open_${description.toLowerCase().replace(/\s+/g, '')}`;
+                    
+                    if(!gw_open) { gw_open = []; }
+                    gw_open.push({
+                        'id' : id,
+                        'top_depth' : top_depth,
+                        'bottom_depth' : bottom_depth,
+                        'diameter' : diameter,
+                        'description' : description,
+                        'symbol': `url(#${symbol})`,
+                        'color': null
+                    });
+
+                    // Max/min diameter and depth
+                    //
+                    if(diameter < minDia) { minDia = diameter; }
+                    if(diameter > maxDia) { maxDia = diameter; }
+                    if(bottom_depth > maxDepth) { maxDepth = bottom_depth; }
+
+                    // Prepare legend
+                    //
+                    let legendEntry   = ["Open interval,", description].join(" ");
+
+                    if(!LegendList.includes(legendEntry)) {
+                        LegendList.push(legendEntry);
+                        Legend.push({
+                            'id': id,
+                            'description': legendEntry,
+                            'symbol': symbol,
+                            'color': null
+                        })
+                    }
+                }
+            }
+        }
+
+        // Construction information
+        //
+        if(gw_cons || gw_hole || gw_csng || gw_open) {
+            myConstruction = { 'gw_cons': gw_cons,
+                               'gw_hole': gw_hole,
+                               'gw_csng': gw_csng,
+                               'gw_open': gw_open
+                             };
+        }
+    }
+
+    // return information
+    //
+    return [myConstruction, Legend, maxDepth, maxDia];
+  }
+
+// Process USGS construction from NWIS construction
 //
+function processUsgsConstructionService(myData, constructionDefs) {
+    myLogger.info("processUsgsConstructionService");
+    myLogger.info(myData);
+    myLogger.debug(constructionDefs);
 
-function callLithologyService(coop_site_no)
-  {
-   console.log("callLithologyService");
-
-   // Loading message
-   //
-   //message = "Processing lithology information for site " + coop_site_no;
-   //openModal(message);
-
-   // Request for site service information
-   //
-   var column       = "well_logid";
-   var request_type = "GET";
-   var script_http  = "/cgi-bin/lithology/requestLithologyRecords.py";
-   var data_http    = column + "=" + coop_site_no;
-      
-   var dataType     = "json";
-      
-   // Web request
-   //
-   webRequest(request_type, script_http, data_http, dataType, LithologyService);
-  }
-
-
-function parseColor(dataRDB)
-  {
-   console.log("parseColor");
-   //console.log(dataRDB);
-
-    var myRe            = /^#/;
-    var lineRe          = /\r?\n/;  
-    var delimiter       ='\t';
-    var myData          = {};
-
-    var myFields        = [
-                           'color',
-                           'code',
-                           'hex',
-                           'rgb'
-                          ];
-
-    var indexField      = 'color';
-
-    // Parse in lines
+    // Output construction components
     //
-    var fileLines       = dataRDB.split(lineRe);
-
-    // Column names on header line
+    let myConstruction = null;
+    
+    // Set construction components
     //
-    while(fileLines.length > 0)
-      {
-        var fileLine = jQuery.trim(fileLines.shift());
-        if(fileLine.length < 1)
-          {
-            continue;
-          }
-        if(!myRe.test(fileLine))
-          {
-            break;
-          }
-       }
-      
-    // Check index column name in file
+    let gw_cons  = null;
+    let gw_hole  = null;
+    let gw_csng  = null;
+    let gw_open  = null;
+    let minDia   = 99999.99;
+    let maxDia   = 0.0
+    let maxDepth = 0.0
+    
+    let LegendList = [];
+    let Legend     = [];
+
+    // Loop through construction
     //
-    //console.log(fileLine);
-    var Fields = fileLine.split(delimiter);
-    //console.log(Fields);
-    if(jQuery.inArray(indexField,Fields) < 0)
-      {
-        var message = "Header line of column names does not contain " + indexField + " column\n";
-        message    += "Header line contains " + Fields.join(", ");
-        openModal(message);
-        fadeModal(2000);
-        return false;
-      }
-    var indexNumber = jQuery.inArray(indexField,Fields)
-    var indexColor = jQuery.inArray('color',Fields)
-       
-    // Format line in header portion [skip]
-    //
-    var fileLine = jQuery.trim(fileLines.shift());
+    if(myData) {
+        
+        // Well construction records
+        //
+        let wellConstruction = myData.well_construction;
+        myLogger.debug(wellConstruction);
+        
+        if(wellConstruction) {
 
-    // Data lines
-    //
-    var count = 0;
-    while(fileLines.length > 0)
-      {
-        fileLine = jQuery.trim(fileLines.shift());
-        if(myRe.test(fileLine))
-          {
-            continue;
-          }
-        if(fileLine.length > 1)
-          {
-            var Values         = fileLine.split(delimiter);
-            var indexValue     = Values[indexNumber];
-          
-            var Color          = Values[indexColor];
-            myData[indexValue] = Color;
-            count++;
-          }
-      }
+            // Construction record
+            //
+            if(wellConstruction.gw_cons) {
+                let wellRecord  = wellConstruction.gw_cons;
 
-   colorLookup = myData;
-   console.log(colorLookup);
+                // Prepare NWIS casing material codes
+                //
+                sealDict       = constructionDefs.seal_cd.Codes;
+                myLogger.debug(sealDict);
 
-   requestLookup(lithFile, parseLith)
+                myLogger.info(`*** Seal information ***`);
+                myLogger.info(wellRecord);
 
-   return;
-  }
+                // Loop
+                //
+                for(let i = 0; i < wellRecord.length; i++) {
+                    let Record = wellRecord[i];
+
+                    myLogger.info(`  Seal depth bottom ${Record.seal_depth_va} material ${Record.seal_ds}`);
+
+                    // Valid record if seal has depth
+                    //
+                    myLogger.debug(`Seal depth ${isNumeric(Record.seal_depth_va)}`);
+                    myLogger.debug(`Seal depth ${Number.isNaN(Record.seal_depth_va)}`);
+                    if(isNumeric(Record.seal_depth_va)) {
+
+                        //let cons_seq_nu  = Record.cons_seq_nu;
+                        let bottom_depth = Record.seal_depth_va;
+                        let description  = Record.seal_ds;
+                        let color        = "#ED9EE9";
+                        let symbol       = null;
+
+                        if(!description) { description = "Other"; }
+                        else {
+                            let wordL = description.split(/\s+/);
+                            for(let i = 0; i < wordL.length; i++) {
+                                wordL[i] = wordL[i].charAt(0).toUpperCase() + wordL[i].substring(1).toLowerCase();
+                            }
+                            description = wordL.join(' ');
+                            if(sealDict[description]) { color = sealDict[description]; }
+                            else {
+                                myLogger.error(`USGS Seal material ${description} no NWIS code`);
+                            }
+                        }
+
+                        let id = `Seal_${description.toLowerCase().replace(/\s+/g, '')}`;
+
+                        // Push record
+                        //
+                        if(!gw_cons) { gw_cons = []; }
+                        gw_cons.push({
+                            'id' : id,
+                            'bottom_depth' : bottom_depth,
+                            'description' : description,
+                            'symbol': null,
+                            'color': color
+                        });
+
+                        // Max/min depth
+                        //
+                        if(bottom_depth > maxDepth) { maxDepth = bottom_depth; }
+
+                        // Build legend
+                        //
+                        let legendEntry   = ["Seal,", description].join(" ")
+                        
+                        if(!LegendList.includes(legendEntry)) {
+                            LegendList.push(legendEntry);
+                            
+                            Legend.push({
+                                'id': id,
+                                'description': legendEntry,
+                                'symbol': null,
+                                'color': color
+                            });
+                        }
+                    }
+                }
+            }
+            myLogger.debug('Construction record');
+            myLogger.debug(gw_cons);
+            myLogger.debug(`Seal depth `);
+
+            // Hole record
+            //
+            if(wellConstruction.gw_hole) {
+                let wellRecord = wellConstruction.gw_hole;
+
+                myLogger.info(`*** Hole information ***`);
+                myLogger.info(wellRecord);
+                // Loop
+                //
+                for(let i = 0; i < wellRecord.length; i++) {
+                    let Record = wellRecord[i];
+
+                    myLogger.info(`  Hole depth top ${Record.hole_top_va} bottom ${Record.hole_bottom_va} diameter ${Record.hole_dia_va}`);
+
+                    // Valid record if borehole has depth and diameter
+                    //
+                    myLogger.debug(`Hole depth ${Number.isNaN(Record.hole_top_va)}`);
+                    myLogger.debug(`Hole depth ${isNumeric(Record.hole_top_va)}`);
+                    myLogger.debug(`Hole bottom depth ${isNumeric(Record.hole_bottom_va)}`);
+                    myLogger.debug(`Hole bottom depth ${isNumeric(Record.hole_dia_va)}`);
+                    if(isNumeric(Record.hole_top_va) && isNumeric(Record.hole_bottom_va) && isNumeric(Record.hole_dia_va)) {
+
+                        let cons_seq_nu  = Record.cons_seq_nu;
+                        let hole_seq_nu  = Record.hole_seq_nu;
+                        let top_depth    = Record.hole_top_va;
+                        let bottom_depth = Record.hole_bottom_va;
+                        let diameter     = Record.hole_dia_va;
+
+                        // Push record
+                        //
+                        if(!gw_hole) { gw_hole = []; }
+                        gw_hole.push({
+                            'id' : hole_seq_nu,
+                            'top_depth' : top_depth,
+                            'bottom_depth' : bottom_depth,
+                            'diameter' : diameter,
+                            'symbol' : null,
+                            'color' : 'white',
+                        });
+
+                        // Max/min diameter and depth
+                        //
+                        if(diameter < minDia) { minDia = diameter; }
+                        if(diameter > maxDia) { maxDia = diameter; }
+                        if(bottom_depth > maxDepth) { maxDepth = bottom_depth; }
+                    }
+                }
+            }
+            myLogger.info(gw_hole);
+            myLogger.debug(`Hole diameter ${maxDia}`);
+
+            // Casing record
+            //
+            myLogger.debug('Casing');
+            if(wellConstruction.gw_csng) {
+                let wellRecord = wellConstruction.gw_csng;
+
+                // Prepare NWIS casing material codes
+                //
+                csngDict       = constructionDefs.csng_material_cd.Codes;
+                myLogger.debug(csngDict);
+
+                myLogger.info(`*** Casing information ***`);
+                myLogger.info(wellRecord);
+                
+                // Loop
+                //
+                for(let i = 0; i < wellRecord.length; i++) {
+                    let Record = wellRecord[i];
+
+                    myLogger.info(`  Casing depth top ${Record.csng_top_va} bottom ${Record.csng_bottom_va} diameter ${Record.csng_dia_va}`);
+
+                    // Valid record if borehole has depth and diameter
+                    //
+                    myLogger.debug(`Casing depth ${isNumeric(Record.csng_top_va)}`);
+                    myLogger.debug(`Casing bottom depth ${isNumeric(Record.csng_bottom_va)}`);
+                    myLogger.debug(`Casing bottom depth ${isNumeric(Record.csng_dia_va)}`);
+                    if(isNumeric(Record.csng_top_va) && isNumeric(Record.csng_bottom_va) && isNumeric(Record.csng_dia_va)) {
+                        
+                        let cons_seq_nu  = Record.cons_seq_nu;
+                        let csng_seq_nu  = Record.csng_seq_nu;
+                        let top_depth    = Record.csng_top_va;
+                        let bottom_depth = Record.csng_bottom_va;
+                        let diameter     = Record.csng_dia_va;
+                        let description  = Record.csng_material_ds;
+
+                        let color        = "#ED9EE9";
+                        let symbol       = null;
+
+                        if(!description) { description = "Unknown"; }
+                        else {
+                            let wordL = description.split(/\s+/);
+                            for(let i = 0; i < wordL.length; i++) {
+                                wordL[i] = wordL[i].charAt(0).toUpperCase() + wordL[i].substring(1).toLowerCase();
+                            }
+                            description = wordL.join(' ');
+                            if(csngDict[description]) { color = csngDict[description]; }
+                            else {
+                                myLogger.error(`USGS Casing material ${description} no NWIS code`);
+                            }
+                        }
+
+                        let id = `Casing_${description.toLowerCase().replace(/\s+/g, '')}`;
+
+                        // Push record
+                        //
+                        if(!gw_csng) { gw_csng = []; }
+                        gw_csng.push({
+                            'id' : id,
+                            'top_depth' : top_depth,
+                            'bottom_depth' : bottom_depth,
+                            'diameter' : diameter,
+                            'description' : description,
+                            'symbol': null,
+                            'color': color
+                        });
  
-function parseLith(dataRDB)
-  {
-   console.log("parseLith");
-   //console.log(dataRDB);
+                        // Max/min diameter and depth
+                        //
+                        if(diameter < minDia) { minDia = diameter; }
+                        if(diameter > maxDia) { maxDia = diameter; }
+                        if(bottom_depth > maxDepth) { maxDepth = bottom_depth; }
 
-    var myRe            = /^#/;
-    var lineRe          = /\r?\n/;  
-    var delimiter       ='\t';
-    var myData          = {};
+                        // Build legend
+                        //
+                        let legendEntry = ["Casing,", description].join(" ");
+                        
+                        if(!LegendList.includes(legendEntry)) {
+                            LegendList.push(legendEntry);
+                            Legend.push({
+                                'id': id,
+                                'description': legendEntry,
+                                'symbol': null,
+                                'color': color
+                            });
+                        }
+                    }
+                }
+            }
+            myLogger.debug(`Casing diameter ${maxDia}`);
 
-    var myFields        = [
-                           'symbol'
-                          ];
+            // Open interval record
+            //
+            if(wellConstruction.gw_open) {
+                let wellRecord = wellConstruction.gw_open;
 
-    var indexField      = 'lithology';
+                // Prepare NWIS open-interval codes
+                //
+                openDict       = constructionDefs.open_cd.Codes;
+                myLogger.debug(openDict);
 
-    // Parse in lines
+                for(let i = 0; i < wellRecord.length; i++) {
+                    let Record         = wellRecord[i];
+
+                    // Valid record if open-interval has depth and diameter
+                    //
+                    if(isNumeric(Record.open_top_va) && isNumeric(Record.open_bottom_va) && isNumeric(Record.open_dia_va)) {
+
+                        let top_depth        = Record.open_top_va;
+                        let bottom_depth     = Record.open_bottom_va;
+                        let diameter         = Record.open_dia_va;
+                        let description      = Record.open_ds;
+                        
+                        let color            = null;
+                        let symbol           = '001.svg';
+
+                        if(!description) { open_ds = "Unknown"; }
+                        else {
+                            let wordL = description.split(/\s+/);
+                            for(let i = 0; i < wordL.length; i++) {
+                                wordL[i] = wordL[i].charAt(0).toUpperCase() + wordL[i].substring(1).toLowerCase();
+                            }
+                            description = wordL.join(' ');
+                            if(openDict[description]) { symbol = openDict[description]; }
+                            else {
+                                myLogger.error(`USGS Casing material ${description} no NWIS code`);
+                            }
+                        }
+
+                        let id = `Open_${description.toLowerCase().replace(/\s+/g, '')}`;
+
+                        // Push record
+                        //
+                        if(!gw_open) { gw_open = []; }
+                        gw_open.push({
+                            'id' : id,
+                            'top_depth' : top_depth,
+                            'bottom_depth' : bottom_depth,
+                            'diameter' : diameter,
+                            'description' : description,
+                            'symbol': `url(#${symbol})`,
+                            'color': null
+                        });
+
+                        // Max/min diameter and depth
+                        //
+                        if(diameter < minDia) { minDia = diameter; }
+                        if(diameter > maxDia) { maxDia = diameter; }
+                        if(bottom_depth > maxDepth) { maxDepth = bottom_depth; }
+
+                        // Build legend
+                        //
+                        let legendEntry = ["Open interval,", description].join(" ");
+                        
+                        if(!LegendList.includes(legendEntry)) {
+                            LegendList.push(legendEntry);
+                            Legend.push({
+                                'id': id,
+                                'description': legendEntry,
+                                'symbol': symbol,
+                                'color': null
+                            });
+                        }
+                    }
+                }
+                myLogger.debug(`Open-interval diameter ${maxDia}`);
+            }
+        }
+        
+        // Add information
+        //
+        if(mySiteInfo) {
+            if(!mySiteInfo.hole_depth_va && maxDepth) { mySiteInfo.hole_depth_va = maxDepth; }
+            else if(mySiteInfo.hole_depth_va && maxDepth) {
+                if(maxDepth > mySiteInfo.hole_depth_va) { mySiteInfo.hole_depth_va = maxDepth; }
+            }
+            mySiteInfo.max_dia_va = null;
+            if(!mySiteInfo.max_dia_va && maxDia) { mySiteInfo.max_dia_va = maxDia; }
+        }
+
+        // Construction information
+        //
+        if(gw_cons || gw_hole || gw_csng || gw_open) {
+            myConstruction = { 'gw_cons': gw_cons,
+                               'gw_hole': gw_hole,
+                               'gw_csng': gw_csng,
+                               'gw_open': gw_open
+                             };
+        }
+    }
+    myLogger.debug('Legend');
+    myLogger.debug(Legend);
+
+    // Return information
     //
-    var fileLines       = dataRDB.split(lineRe);
-
-    // Column names on header line
-    //
-    while(fileLines.length > 0)
-      {
-        var fileLine = jQuery.trim(fileLines.shift());
-        if(fileLine.length < 1)
-          {
-            continue;
-          }
-        if(!myRe.test(fileLine))
-          {
-            break;
-          }
-       }
-      
-    // Check index column name in file
-    //
-    //console.log(fileLine);
-    var Fields = fileLine.split(delimiter);
-    //console.log(Fields);
-    if(jQuery.inArray(indexField,Fields) < 0)
-      {
-        var message = "Header line of column names does not contain " + indexField + " column\n";
-        message    += "Header line contains " + Fields.join(", ");
-        openModal(message);
-        fadeModal(2000);
-        return false;
-      }
-    var indexNumber = jQuery.inArray(indexField,Fields)
-       
-    // Format line in header portion [skip]
-    //
-    var fileLine = jQuery.trim(fileLines.shift());
-
-    // Data lines
-    //
-    var count = 0;
-    while(fileLines.length > 0)
-      {
-        fileLine = jQuery.trim(fileLines.shift());
-        if(myRe.test(fileLine))
-          {
-            continue;
-          }
-        if(fileLine.length > 1)
-          {
-            var Values        = fileLine.split(delimiter);
-            var indexValue    = Values[indexNumber];
-          
-            for(var i = 0; i < myFields.length; i++)
-              {
-                var Value = Values[jQuery.inArray(myFields[i],Fields)];
-                if(typeof Value === "undefined" || Value.length < 1)
-                  {
-                    Value = "";
-                  }
-                if(!myData[indexValue]) { myData[indexValue] = {}; }
-                myData[indexValue][myFields[i]] = Value;
-              }
-            count++;
-          }
-      }
-
-   lithLookup = myData;
-   console.log(lithLookup);
-
-   requestOwrdLithService();
-
-   return;
+    return [myConstruction, Legend, maxDepth, maxDia];
   }
