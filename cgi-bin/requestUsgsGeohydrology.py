@@ -106,7 +106,7 @@ debug           = False
 
 program         = "USGS Geohydrology Script"
 version         = "3.01"
-version_date    = "15December2024"
+version_date    = "23December2024"
 
 program_args    = []
 
