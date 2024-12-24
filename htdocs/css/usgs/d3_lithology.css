@@ -4,8 +4,8 @@
  * The file d3_lithology.css is a css file to providing styling for the well
  *  lithollogy grapher.
  *
- * version 1.03
- * January 11, 2019
+ * version 3.01
+ * November 26, 2024
 */
 
 /*
@@ -35,52 +35,6 @@
 	color: red;
 	font-weight: bold;
 }
-
-#svgCanvas 
- { 
-  width: 400px; 
-  height: 700px; 
-  border: 1px solid #484;
- }
-
-.site_title
-  {
-   color: black;
-   font-family: Verdana;
-   font-size: 14px;
-   font-weight: bold;
-   kerning: 1;
-   text-anchor: front;
-  }
-
-.tic_labels
-  {
-   color: black;
-   font-family: Verdana;
-   font-size: 9px;
-   kerning: 1;
-   text-anchor: end;
-  }
-
-.y_axis_label
-  {
-   color: black;
-   font-family: Verdana;
-   font-weight: bold;
-   font-size: 12px;
-   kerning: 1;
-   text-anchor: middle;
-  }
-
-.legend_descriptions
-  {
-   color: black;
-   font-family: Verdana;
-   font-size: 9px;
-   kerning: 1;
-   text-anchor: start;
-  }
-
 
 .none
   {
@@ -167,10 +121,4 @@
   {
    background-color: #eedef7;
    fill: #eedef7;
-  }
-
-#lithology1
-  {
-    width: 50px;
-    height: 15%;
   }
