@@ -4,8 +4,8 @@
  * D3_Lithology is a JavaScript library to provide a set of functions to build
  *  well lithology column in svg format.
  *
- * version 2.04
- * October 13, 2024
+ * version 3.18
+ * December 22, 2024
 */
 
 /*
@@ -31,6 +31,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 */
+// https://www.google.com/search?q=javascript+create+new+array+from+existing+array+of+objects&client=firefox-b-1-d&sca_esv=bc26b88b20004dbc&ei=QSMsZ43tGaTK0PEPl5GJsAQ&oq=javascript+create+new+array+from+array&gs_lp=Egxnd3Mtd2l6LXNlcnAiJmphdmFzY3JpcHQgY3JlYXRlIG5ldyBhcnJheSBmcm9tIGFycmF5KgIIAjIFEAAYgAQyBhAAGAcYHjIGEAAYBxgeMgQQABgeMgYQABgIGB4yBhAAGAgYHjIGEAAYCBgeMgYQABgIGB4yCxAAGIAEGIYDGIoFMgsQABiABBiGAxiKBUismQFQ9h1Y_GVwAngBkAEAmAFToAHtC6oBAjIxuAEByAEA-AEBmAIWoALqDMICChAAGLADGNYEGEfCAg0QABiABBiwAxhDGIoFwgIHEAAYgAQYDcICCxAAGIAEGJECGIoFwgIIEAAYBxgIGB7CAggQABgIGA0YHpgDAIgGAZAGCpIHAjIyoAewuwE&sclient=gws-wiz-serp
 
 // Set globals
 //
@@ -38,147 +39,185 @@ var svg;
 var jsonData;
 var lithologyData;
 
+//var svg_width   = '60rem';
+//var svg_height  = '50rem';
+
+var svg_width   = '800';
+var svg_height  = '700';
+var viewBox     = `0 0 ${svg_width} ${svg_height}`;
+
+var y_min, y_max, y_interval, y_range;
 var y_box_min   = 50;
 var y_box_max   = 650;
 var y_axis      = y_box_max - y_box_min;
+
+var x_min, x_max, x_interval, x_range;
 var x_box_min   = 75;
-var x_box_max   = x_box_min + 50;
-var y_range;
+var x_box_width = 200;
+var x_box_max   = x_box_min + x_box_width;
+var x_axis      = x_box_max - x_box_min;
 
-var text_size   = 9;
+var x_legend    = x_box_max + 100
+var y_legend    = y_box_min
+var legend_box  = 20
+var y_top       = y_box_min
 
-// No information
-//
-function noLog(svgContainer)
-  { 
-   console.log("noLog");
-
-   // No log label
-   //
-   label_txt       = "No Well Lithology Information";
-   var  label      = "translate("
-   label          += [( x_box_max + x_box_min ) * 0.5, + (y_box_max + y_box_min ) * 0.5].join(", ");
-   label          += ") rotate(-90)";
-
-   var myText      = svgContainer.append("text")
-                                 .attr("transform", label)
-                                 .attr('class', 'y_axis_label')
-                                 .text(label_txt);
-  }
 
 // Plot lithology column
 //
-function plotLithology(wellData)
-  {
-   console.log("plotLithology");
-   console.log(wellData);
+function plotLithology([
+    siteData,
+    lithologyData,
+    WellConstruction,
+    LithologyLegend,
+    ConstructionLegend]) {
+    
+    myLogger.info("plotLithology");
+    myLogger.info(siteData);
+    myLogger.info('lithologyData');
+    myLogger.info(lithologyData);
+    myLogger.info('WellConstruction');
+    myLogger.info(WellConstruction);
+    myLogger.info('LithologyLegend');
+    myLogger.info(LithologyLegend);
+    myLogger.info('ConstructionLegend');
+    myLogger.info(ConstructionLegend);
 
-   // Fade modal dialog
-   //
-   fadeModal(1000);
+    // Fade modal dialog
+    //
+    fadeModal(1000);
 
-   // Prepare coop_site_no new format 7-digits
-   //
-   var county_nm              = coop_site_no.substring(0,4);
-   var well_log_ID            = coop_site_no.substring(4);
+    // Add tooltip
+    //
+    var tooltip = addToolTip();
 
-   // Lithology
-   //
-   lithologyData              = wellData.WellLithology;
-   lithologyDefs              = wellData.Lithology;
-   console.log("lithologyDefs");
-   console.log(lithologyDefs);
-   colorDefs                  = wellData.Color;
-   console.log("colorDefs");
-   console.log(colorDefs);
-  
-   // Plot specs
-   //
-   min_value                  = 0.0;
-   max_value                  = wellData.max_depth;
-   land_surface               = wellData.lsd_elevation;
-   altitude_accuracy          = wellData.altitude_accuracy;
-   returnList                 = get_max_min( min_value, max_value);
-   y_min                      = returnList[0];
-   y_max                      = returnList[1];
-   y_interval                 = returnList[2];
-   y_range                    = y_max - y_min
-   if(y_min < 0) { y_min = 0.0; }
-   console.log("Y max " + y_max + " interval " + y_interval);
-	
-   // SVG canvas
-   //
-   var svg = d3.select("#svgCanvas");
+    // SVG canvas
+    //
+    var svg = d3.select("#svgCanvas")
+        .attr("title", "Lithology and Well Construction " + coop_site_no)
+        .attr("version", 1.1)
+        .attr("xmlns", "http://www.w3.org/2000/svg")
+        .attr("xmlns:xlink", "http://www.w3.org/1999/xlink")
+        .attr('width', svg_width)
+        .attr('height', svg_height)
+        .attr('viewBox', viewBox)
+        .attr('fill', 'white')
 
-   // Add site information
-   //
-   var myRect      = svg.append("g")
-                        .append("text")
-                        .attr('x', x_box_min)
-                        .attr('y', y_box_min * 0.5)
-                        .attr('class', 'site_title')
-                        .text("Site " + coop_site_no);
-	
-   // Draw bore hole
-   //
-   axisBox(
-           svg, 
-           x_box_min, 
-           x_box_max, 
-           y_box_min, 
-           y_box_max,
-           "none"
-          );
-
-   // No lithology information
-   //
-   if(!lithologyData)
-     {
-      noLog(svg, 'No well lithology information');
-  
-      return false;
-     }
-	
-   // Add tooltip
-   //
-   var tooltip = addToolTip();
-
-   // Legend
-   //
-   addLegend(svg, lithologyData, lithologyDefs)
-
-   // Lithology
-   //
-   addLithology(
-                svg,
-                x_box_min, 
-                x_box_max, 
-                y_box_min, 
-                y_box_max, 
-                lithologyData,
-                lithologyDefs,
-                colorDefs,
-                tooltip
-               )
-
-   // Left y axis
-   //
-   yAxis(
-      svg,
-      x_box_min,
-      x_box_max,
-      y_box_min,
-      y_box_max,
-      y_min,
-      y_max,
-      'left',
-      "Depth Below Land Surface, in feet"
+    // Draw bore hole
+    //
+    axisBox(
+        svg,
+        x_box_min,
+        x_box_max,
+        y_box_min,
+        y_box_max,
+        "none"
     );
 
-   // Right y axis (elevation)
-   //
-   var elevation_max = land_surface;
-   var elevation_min = elevation_max - y_max;
+    // Site information
+    //
+    station_nm    = siteData.station_nm;
+    minDepth      = 0.0;
+    maxDepth      = siteData.hole_depth_va;
+    minDia        = 0.0;
+    maxDia        = siteData.max_dia_va;
+    land_surface  = siteData.alt_va;
+    verticalDatum = siteData.alt_datum_cd;
+    myLogger.info(`Site information well depth ${maxDepth} diameter ${maxDia} land surface ${land_surface} vertical datum ${verticalDatum}`);
+    
+    [y_min, y_max, y_interval] = get_max_min(minDepth, maxDepth);
+    if(y_min < 0.0) { y_min = 0.0; }
+    myLogger.info(`Y-axis information max ${y_max} min ${y_min} y_interval ${y_interval}`);
+
+    [x_min, x_max, x_interval] = get_max_min(minDia, maxDia);
+    if(x_min < 0.0) { x_min = 0.0; }
+    x_max += x_interval * 4;
+    myLogger.info(`X-axis information max ${x_max} min ${x_min} x_interval ${x_interval}`);
+
+    // Prepare site title
+    //
+    let siteTitle = [];
+    if(coop_site_no) { siteTitle.push(`OWRD ${coop_site_no}`); }
+    if(site_no) { siteTitle.push(`USGS ${site_no}`); }
+    if(station_nm) { siteTitle.push(`${station_nm}`); }
+
+    // Add site information
+    //
+    var myRect = svg.append("g")
+        .append("text")
+        .attr('x', 0.0)
+        .attr('y', y_box_min * 0.5)
+        .style("text-anchor", "start")
+        .style("font-family", "sans-serif")
+        .style("font-weight", "700")
+        .style("fill", 'black')
+        .text(`Site ${siteTitle.join(' -- ')}`)
+
+    // Show printing
+    //
+    jQuery('#printButton').show();
+
+    // Lithology
+    //
+    if(lithologyData) {
+        addLithology(
+            svg,
+            y_min,
+            y_max,
+            x_box_min,
+            x_box_max,
+            y_box_min,
+            y_box_max,
+            lithologyData,
+            LithologyLegend,
+            tooltip
+        )
+    }
+    else {
+        lithologyLegend(svg, [], 'No lithology reported');
+    }
+
+    // Construction
+    //
+    if(WellConstruction) {
+
+        myLogger.info("WellConstruction");
+
+        addWellConstruction(svg,
+                                x_min,
+                                x_max,
+                                y_min,
+                                y_max,
+                                x_box_min,
+                                x_box_max,
+                                y_box_min,
+                                y_box_max,
+                                WellConstruction,
+                                ConstructionLegend,
+                                tooltip)
+    }
+    else {
+        constructionLegend(svg, [], 'No well construction reported');
+    }
+
+    // Left y axis
+    //
+    yAxis(
+        svg,
+        x_box_min,
+        x_box_max,
+        y_box_min,
+        y_box_max,
+        y_min,
+        y_max,
+        'left',
+        "Depth Below Land Surface, in feet"
+    );
+
+    // Right y axis (elevation)
+    //
+    var elevation_max = land_surface;
+    var elevation_min = elevation_max - y_max;
 
     yAxis(
       svg,
@@ -189,48 +228,479 @@ function plotLithology(wellData)
       elevation_max,
       elevation_min,
       'right',
-      "Elevation, in feet"
+      'Elevation, in feet ' + verticalDatum
     );
-  }
+    
+    // Print svg to file
+    //
+    jQuery("#viewReport").click(function() {
+
+        viewReport(site_no, coop_site_no, station_nm);
+    });
+    
+    // Print svg to file
+    //
+    jQuery(".printSvg").click(function() {
+        myLogger.info("printSvg method");
+        //const svg = d3.select("#svgCanvas").node();
+        //const svg = document.querySelector('svg');
+        //const svgClone = svg.cloneNode(true);
+        //svgClone.id = 'svgClone';
+        //myLogger.info(svgClone);
+
+        const svgClone = d3.select('svg')
+              .clone(true)
+              .attr('id', 'svgClone')
+
+        // Modify the clone as needed for printing
+        // ...
+        myLogger.info('svgClone');
+        myLogger.info(svgClone);
+        var myUsgs = USGS_logo(svgClone, 'US Geological Survey', svg_width, svg_height, 45)
+        const svgElement = document.querySelector('#svgClone');
+        
+        const svgString = new XMLSerializer().serializeToString(svgElement);
+        svgElement.remove()
+
+        const printWindow = window.open('', '_blank', '');
+        printWindow.document.write(`<html><head><title>${siteTitle}</title></head><body>`);
+        printWindow.document.write(svgString);
+        printWindow.document.write("</body></html>");
+        printWindow.document.close();
+
+        printWindow.print();        //writeDownloadLink(svg, 'test.svg');
+    });
+}
 
 function addLithology(
-                      svgContainer,
-                      x_box_min, 
-                      x_box_max, 
-                      y_box_min, 
-                      y_box_max, 
-                      lithologyData,
-                      lithologyDefs,
-                      colorDefs,
-                      tooltip
-                     )
-  { 
-   console.log("addLithology");
-   //console.log(lithologyData);
+    svgContainer,
+    y_min,
+    y_max,
+    x_box_min,
+    x_box_max,
+    y_box_min,
+    y_box_max,
+    lithologyData,
+    LithologyLegend,
+    tooltip) {
 
-   // Set
-   //
-   var y_range     = y_max - y_min;
-   var y_axis      = y_box_max - y_box_min;
+    myLogger.info('addLithology');
+    myLogger.info('lithologyData');
+    myLogger.info(lithologyData);
+    myLogger.info('LithologyLegend');
+    myLogger.info(LithologyLegend);
 
-   // Loop through lithology
-   //
-   var tempData     = lithologyData.slice();
+    // Set
+    //
+    let y_range = y_max - y_min;
+    let y_axis  = y_box_max - y_box_min;
 
-   //var lithology   = svgContainer.append("g")
-   //                              .attr("class", "lithology")
+    // Set defs section of svg
+    //
+    buildDefs(svgContainer, LithologyLegend);
+              
+    // Loop through lithology
+    //
+    for(let i = 0; i < lithologyData.length; i++) {
+
+        let lithRecord  = lithologyData[i];
+        myLogger.debug(lithRecord);
+
+        let id          = lithRecord.id;
+        let top_depth   = lithRecord.top_depth;
+        let bot_depth   = lithRecord.bot_depth;
+        let description = lithRecord.description;
+        let symbol      = lithRecord.symbol;
+        let color       = lithRecord.color;
+
+        // Add lithology if bottom depth is defined
+        //
+        if(bot_depth) {
+
+            let width       = x_box_max - x_box_min
+
+            let y_top       = y_box_min + y_axis * (top_depth - y_min) / y_range
+            let y_bot       = y_box_min + y_axis * (bot_depth - y_min) / y_range
+            let thickness   = y_bot - y_top
+
+            // Add color
+            //
+            if(color && color.length > 0) {
+                let lithology   = svgContainer.append("g")
+                    .attr("class", "lithology")
+                let myRect      = lithology.append("rect")
+                    .attr('x', x_box_min)
+                    .attr('y', y_top)
+                    .attr('width', width)
+                    .attr('height', thickness)
+                    .attr('fill', color)
+            }
+
+            // Add lith pattern
+            //
+            let toolTip     = [description, "from", top_depth, "to", bot_depth, "feet"].join(" ");
+            let data        = [ {x:x_box_min, tooltip: toolTip}];
+
+            let lithology = svgContainer.append("g")
+                .attr("class", "lithology")
+                .data(data)
+
+            let myRect = lithology.append("rect")
+                .attr('id', id)
+                .attr('class', 'lithology')
+                .attr('x', x_box_min)
+                .attr('y', y_top)
+                .attr('width', width)
+                .attr('height', thickness)
+                .attr('fill', `url(#${id})`)
+                .attr('stroke', 'black')
+                .attr('stroke-width', 1)
+                .on("mousemove", function(event, d) {
+                    tooltip
+                        .style("left", event.pageX + "px")
+                        .style("top", event.pageY + "px")
+                        .style("display", "inline-block")
+                        .html(d.tooltip);
+                })
+                .on("mouseout", function(d){ tooltip.style("display", "none");});
+        }
+    }
     
-   while ( tempData.length > 0 ) {
+    // Add and fade last lithology if needed
+    //
+    let lithRecord  = lithologyData[lithologyData.length - 1];
+    myLogger.info('Last lithology');
+    myLogger.info(lithRecord);
 
-        var lithRecord  = tempData.shift();
-        console.log(lithRecord);
+    let id          = lithRecord.id;
+    let top_depth   = lithRecord.top_depth;
+    let bot_depth   = lithRecord.bot_depth;
+    let description = lithRecord.description;
+    let symbol      = lithRecord.symbol;
+    let color       = lithRecord.color;
+
+    if(top_depth && bot_depth) {
+        top_depth = bot_depth;
+        bot_depth = y_max;
+    }
+    else if(top_depth) {
+        bot_depth = y_max;
+    }
+    myLogger.info(`  Lithology ${description} Top ${top_depth} Bottom ${bot_depth}`);
+
+    let width       = x_box_max - x_box_min
+
+    let y_top       = y_box_min + y_axis * (top_depth - y_min) / y_range
+    let y_bot       = y_box_min + y_axis * (bot_depth - y_min) / y_range
+    let thickness   = y_bot - y_top
+
+    let toolTip     = [description, "from", top_depth, "to ?? depth"].join(" ");
+    let data        = [ {x:x_box_min, tooltip: toolTip}];
+
+    // Check for existing definitions section
+    //
+    let defs = d3.select("defs");
+    
+    // Set definitions in svg container if needed
+    //
+    if(defs.size() < 1) {
+        myLogger.info(`Creating definitions section defs ${defs.size()}`);
+        defs = svgContainer.append("defs")
+    }
+     else {
+        myLogger.info(`Appending to definitions section defs ${defs.size()}`);
+    }
+   
+    let gradient = defs.append('linearGradient')
+        .attr('id', 'svgGradient')
+        .attr('x1', '0%')
+        .attr('x2', '0%')
+        .attr('y1', '0%')
+        .attr('y2', '100%')
+        .attr("gradientUnits", "userSpaceOnUse")
+        .attr("spreadMethod", "pad");
+
+    gradient.append('svg:stop')
+        .attr('class', 'start')
+        .attr('offset', '0%')
+        .attr('stop-color', 'none')
+        .attr('stop-opacity', 1)
+        .attr('fill', url);
+
+    gradient.append('svg:stop')
+        .attr('class', 'end')
+        .attr('offset', '100%')
+        .attr('stop-color', 'none')
+        .attr('stop-opacity', 0)
+        .attr('fill', url);
+
+    let lithology = svgContainer.append("g")
+        .attr("class", "lastLithology")
+        .data(data)
+
+    let myRect = lithology.append("rect")
+        .attr('id', id)
+        .attr('class', 'lithology')
+        .attr('x', x_box_min)
+        .attr('y', y_top)
+        .attr('width', width)
+        .attr('height', thickness)
+        .attr('fill', `url(#${id})`)
+        .attr('fill-opacity', 0.25)
+        .attr('stroke', 'white')
+        .attr('stroke-width', 1)
+        .on("mousemove", function(event, d) {
+            tooltip
+                .style("left", event.pageX + "px")
+                .style("top", event.pageY + "px")
+                .style("display", "inline-block")
+                .html(d.tooltip);
+        })
+        .on("mouseout", function(d){ tooltip.style("display", "none");});
+    
+let svg = d3.selectAll('.lastLithology')
+let svgGradient = svg.append("linearGradient")
+
+svgGradient
+    .attr("id", 'gradient')
+    .attr("gradientUnits", "userSpaceOnUse")
+    .attr("spreadMethod", "pad");
+
+svgGradient.append("svg:stop")
+    .attr("offset", "0%")
+    .attr("stop-color", 'black')
+    .attr("stop-opacity", 1);
+
+svgGradient.append("svg:stop")
+    .attr("offset", "100%")
+    .attr("stop-color", 'white')
+    .attr("stop-opacity", 0.1);
+
+svg.style("fill", 'url(#svgGradient)')
+svg.selectAll('path')
+        .style("stroke", 'url(#svgGradient)')
+    
+    // Add unknown ?? text to bottom
+    //
+    let textInfo    = textSize('?-?-?-?-?-?');
+    let text_height = textInfo.height;
+    
+    let myText = lithology.append("text")
+        .attr('x', x_box_min + 0.5 * (x_box_max - x_box_min))
+        .attr('y', y_box_max - (y_box_max - y_bot) * 0.2 - text_height)
+        .style("text-anchor", "middle")
+        .style("font-family", "sans-serif")
+        .style("font-size", "1rem")
+        .style("font-weight", "700")
+        .style("opacity", 0.6)
+        .style("fill", 'black')
+        .text('?-?-?-?-?-?')
+
+    // Add lithology legend
+    //
+    lithologyLegend(svgContainer, LithologyLegend, 'Lithology')
+  }
+
+function buildDefs(svgContainer, lithologyDefs) {
+    myLogger.info("addLegend");
+    myLogger.info(lithologyData);
+    myLogger.info(lithologyDefs);
+
+    // Check for existing definitions section
+    //
+    let defs = d3.select("defs");
+    
+    // Set definitions in svg container if needed
+    //
+    if(defs.size() < 1) {
+        myLogger.info(`Creating definitions section defs ${defs.size()}`);
+        defs = svgContainer.append("defs")
+    }
+    else {
+        myLogger.info(`Appending to definitions section defs ${defs.size()}`);
+    }
+
+    // Build definitions section
+    //
+    for(let i = 0; i < lithologyDefs.length; i++) {
+
+        let id          = lithologyDefs[i].id;
+        let description = lithologyDefs[i].description;
+        let symbol      = lithologyDefs[i].symbol;
+
+        // Build legend
+        //
+        let pattern = defs.append("pattern")
+            .attr('id', id)
+            .attr('patternUnits', 'userSpaceOnUse')
+            .attr('width', 100)
+            .attr('height', 100)
+
+        let myimage = pattern.append('image')
+            .attr('xlink:href', ["lithology_patterns", symbol].join("/"))
+            .attr('width', 100)
+            .attr('height', 100)
+            .attr('x', 0)
+            .attr('y', 0)
+    }
+
+    return;
+  }
+
+function lithologyLegend(svgContainer, myLegend, myTitle) {
+    myLogger.info("lithologyLegend");
+    myLogger.info(myLegend);
+
+    // Set legend
+    //
+    let descriptions = svgContainer.append("g")
+        .attr("id", "lithology_descriptions")
+        .attr("class", "legend_descriptions")
+
+    // Set legend title
+    //
+    descriptions.append("rect")
+        .attr('id', 'lithEntries')
+        .attr('x', x_legend)
+        .attr('y', y_top)
+        .attr('width', 1)
+        .attr('height', 1)
+        .attr('fill', 'none')
+        .attr('stroke', 'black')
+        .attr('stroke-width', 0);
+    descriptions.append("text")
+        .attr('x', x_legend)
+        .attr('y', y_top + legend_box * 0.75)
+        .style("text-anchor", "start")
+        .style("alignment-baseline", "center")
+        .style("font-family", "sans-serif")
+        .style("font-weight", "500")
+        .style("fill", 'black')
+        .text(myTitle);
+
+    // Loop through lithology legend
+    //
+    for(let i = 0; i < myLegend.length; i++) {
+
+        y_top += legend_box * 1.5
+
+        let Record      = myLegend[i];
+        
+        let id          = Record.id
+        let description = Record.description
+        let symbol      = Record.symbol;
+
+        myLogger.info(  `Legend lithology ${description} pattern ${symbol}`);
+
+        let myRect = descriptions.append("rect")
+            .attr('id', 'lithEntries')
+            .attr('class', id)
+            .attr('x', x_legend)
+            .attr('y', y_top)
+            .attr('width', legend_box)
+            .attr('height', legend_box)
+            .attr('fill', `url(#${id})`)
+            .attr('stroke', 'black')
+            .attr('stroke-width', 1)
+            .on('mouseover', function(d, i) {
+                let id = d3.select(this).attr('class');
+                d3.selectAll("#" + id)
+                    .transition()
+                    .duration(100)
+                    .attr('stroke-width', 4)
+                    .attr('stroke', 'yellow')
+            })
+            .on('mouseout', function(d, i) {
+                let id = d3.select(this).attr('class');
+                d3.selectAll("#" + id)
+                    .transition()
+                    .duration(100)
+                    .attr('stroke-width', 1)
+                    .attr('stroke', 'black')
+            })
+
+        let myText = descriptions.append("text")
+            .style("text-anchor", "start")
+            .style("alignment-baseline", "center")
+            .style("font-family", "sans-serif")
+            .style("font-weight", "300")
+            .style("fill", 'black')
+            .text(description)
+            .attr('class', id)
+            .attr('x', x_legend + legend_box * 1.25)
+            .attr('y', y_top + legend_box * 0.75)
+            .on('mouseover', function(d, i) {
+                let id = d3.select(this).attr('class');
+                d3.selectAll("#" + id)
+                    .transition()
+                    .duration(100)
+                    .attr('stroke-width', 4)
+                    .attr('stroke', 'yellow')
+            })
+            .on('mouseout', function(d, i) {
+                let id = d3.select(this).attr('class');
+                d3.selectAll("#" + id)
+                    .transition()
+                    .duration(100)
+                    .attr('stroke-width', 1)
+                    .attr('stroke', 'black')
+            })
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+// Not Needed
+
+
+function addOwrdLithology(
+    svgContainer,
+    y_min,
+    y_max,
+    x_box_min,
+    x_box_max,
+    y_box_min,
+    y_box_max,
+    lithologyData,
+    LithologyLegend,
+    tooltip) {
+
+    myLogger.info('addLithology');
+    myLogger.info('lithologyData');
+    myLogger.info(lithologyData);
+    myLogger.info('LithologyLegend');
+    myLogger.info(LithologyLegend);
+
+    // Set
+    //
+    var y_range     = y_max - y_min;
+    var y_axis      = y_box_max - y_box_min;
+
+    // Set defs section of svg
+    //
+    buildDefs(svgContainer, LithologyLegend);
+              
+    // Loop through lithology
+    //
+    for(let i = 0; i < lithologyData.length; i++) {
+
+        var lithRecord  = lithologyData[i];
+        myLogger.debug(lithRecord);
 
         var id          = lithRecord.svg;
         var lithCode    = lithRecord.lithology.replace(/\s+&\s+/g, '');
         var color       = lithRecord.color;
         var description = lithRecord.lithology_description;
 
-        var top_depth   = parseFloat(lithRecord.start_depth);
+       var top_depth   = parseFloat(lithRecord.start_depth);
+       if(!top_depth) { top_depth = 0.0; }
         var bot_depth   = parseFloat(lithRecord.end_depth);
 
         var width       = x_box_max - x_box_min
@@ -241,17 +711,16 @@ function addLithology(
 
         // Add color
         //
-        if(color && color.length > 0)
-          {
-           var lithology   = svgContainer.append("g")
-                                         .attr("class", "lithology")
-           var myRect      = lithology.append("rect")
-                                      .attr('x', x_box_min)
-                                      .attr('y', y_top)
-                                      .attr('width', width)
-                                      .attr('height', thickness)
-                                      .attr('class', color)
-          }
+        if(color && color.length > 0) {
+            var lithology   = svgContainer.append("g")
+                .attr("class", "lithology")
+            var myRect      = lithology.append("rect")
+                .attr('x', x_box_min)
+                .attr('y', y_top)
+                .attr('width', width)
+                .attr('height', thickness)
+                .attr('fill', color)
+        }
 
         // Add lith pattern
         //
@@ -285,240 +754,194 @@ function addLithology(
                                    .on("mouseout", function(d){ tooltip.style("display", "none");});
         //myRect.append("title")
         //      .text(function(d) { return toolTip; });
-   }
-  }
+    }
 
-function addLegend(svgContainer, lithologyData, lithologyDefs)
-  { 
-   console.log("addLegend");
+    // Set svg container
+    //
+    var defs = d3.select("#definitions")
+    if(!defs[0]) {
+        var defs = svgContainer.append("defs")
+            .attr('id', 'definitions')
+    }
+    var gradient = defs.append('linearGradient')
+        .attr('id', 'svgGradient')
+        .attr('x1', '0%')
+        .attr('x2', '0%')
+        .attr('y1', '0%')
+        .attr('y2', '100%')
+        .attr('fill', url);
 
-   var tempData     = lithologyDefs.slice();
-   console.log(tempData);
-  
-   var x_legend     = x_box_max + 100
-   var y_legend     = y_box_min
-   var legend_box   = 20
-   var y_top        = y_box_min
+    gradient.append('stop')
+        .attr('class', 'start')
+        .attr('offset', '0%')
+        .attr('stop-color', 'none')
+        .attr('stop-opacity', 1)
+        .attr('fill', url);
 
-   var protocol     = window.location.protocol; // Returns protocol only
-   var host         = window.location.host;     // Returns host only
-   var pathname     = window.location.pathname; // Returns path only
-   var url          = window.location.href;     // Returns full URL
-   var origin       = window.location.origin;   // Returns base URL
-   var webPage      = (pathname.split('/'))[1];
-
-   console.log("protocol " + protocol);
-   console.log("host " + host);
-   console.log("pathname " + pathname);
-   console.log("url " + url);
-   console.log("origin " + origin);
-   console.log("webPage " + webPage);
-
-   var defs         = svgContainer.append("defs")
-
-   // Loop through lithology
-   //
-   var Legend       = [];
-   var LegendList   = [];
+    gradient.append('stop')
+        .attr('class', 'end')
+        .attr('offset', '100%')
+        .attr('stop-color', 'none')
+        .attr('stop-opacity', 0)
+        .attr('fill', url);
     
-   while ( tempData.length > 0 ) {
+    // Add and fade last lithology
+    //
+    var lithology   = svgContainer.append("g")
+        .attr("class", "lithology")
+    //var url         = 'url(#svgGradient)'
 
-        var lithRecord  = tempData.shift();
+    var toolTip     = [description, "from", bot_depth, "to unknown depth"].join(" ");
+    var data        = [ {x:x_box_min, tooltip: toolTip}];
+    var thickness   = y_box_max - y_bot
 
-        var lithology   = lithRecord.lithology;
-        var symbol      = lithRecord.symbol;
-        var lithCode    = lithRecord.lithology.replace(/\s+&\s+/g, '');
+    var lithology   = svgContainer.append("g")
+        .attr("class", "lithology")
+        .data(data)
 
-        // Build legend
-        //
-        if(LegendList.indexOf(lithology) < 0)
-          {
-           var id          = symbol
-           var svg_file    = symbol + ".svg"
-           //var link_http   = [protocol + '/', host, webPage, "lithology_patterns", svg_file].join("/");
-           var link_http   = ["lithology_patterns", svg_file].join("/");
-   
-           var pattern     = defs.append("pattern")
-                                 .attr('id', id)
-                                 .attr('patternUnits', 'userSpaceOnUse')
-                                 .attr('width', 100)
-                                 .attr('height', 100)
-   
-           var myimage     = pattern.append('image')
-                                 .attr('xlink:href', link_http)
-                                 .attr('width', 100)
-                                 .attr('height', 100)
-                                 .attr('x', 0)
-                                 .attr('y', 0)
-
-           LegendList.push(lithology);
-           Legend.push({ 
-                        'lithCode': lithCode,
-                        'symbol': symbol,
-                        'description': lithology,
-                        'image': id
-                       })
-
-           //lithologyDefs[lithology].pattern = id;
-          }
-   }
-
-   // Loop through lithology
-   //
-   var tempData     = Legend;
-  
-   var x_legend     = x_box_max + 100
-   var y_legend     = y_box_min
-   var legend_box   = 20
-   var y_top        = y_box_min
-
-   var descriptions = svgContainer.append("g")
-                                  .attr("class", "legend_descriptions")
+    var myRect      = lithology.append("rect")
+        .attr('id', lithCode)
+        .attr('class', 'lithology')
+        .attr('x', x_box_min)
+        .attr('y', y_bot)
+        .attr('width', width)
+        .attr('height', thickness)
+        .attr('fill', url)
+        .attr('fill-opacity', 0.25)
+        .attr('stroke', 'black')
+        .attr('stroke-width', 1)
+        .on("mousemove", function(event, d) {
+            tooltip
+                .style("left", event.pageX + "px")
+                .style("top", event.pageY + "px")
+                .style("display", "inline-block")
+                .html(d.tooltip);
+        })
+        .on("mouseout", function(d){ tooltip.style("display", "none");});
     
-    while ( tempData.length > 0 ) {
+    // Add unknown ?? text to bottom
+    //
+    var textInfo    = textSize('?-?-?-?-?-?');
+    var text_height = textInfo.height;
+    
+    var lithology   = svgContainer.append("g")
+        .attr("class", "lithology")
+    
+    var myText = lithology.append("text")
+        .attr('x', x_box_min + 0.5 * (x_box_max - x_box_min))
+        .attr('y', y_box_max - 0.5 * (y_box_max - y_bot) + 0.5 * text_height)
+        .style("text-anchor", "middle")
+        .style("font-family", "sans-serif")
+        .style("font-size", "1rem")
+        .style("font-weight", "700")
+        .style("opacity", 0.6)
+        .style("fill", 'black')
+        .text('?-?-?-?-?-?')
 
-        var Record      = tempData.shift();
-
-        var lithCode    = Record.lithCode;
-        var symbol      = Record.symbol;
-        var description = Record.description
-        var id          = Record.image
-        var url         = 'url(#' + id + ')'
-
-        var myRect      = descriptions.append("rect")
-                                      .attr('class', lithCode)
-                                      .attr('x', x_legend)
-                                      .attr('y', y_top)
-                                      .attr('width', legend_box)
-                                      .attr('height', legend_box)
-                                      .attr('fill', url)
-                                      .attr('stroke', 'black')
-                                      .attr('stroke-width', 1)
-                                      .on('mouseover', function(d, i) {
-                                         var lithClass = d3.select(this).attr('class');
-                                         d3.selectAll("#" + lithClass)
-                                           .transition()
-                                           .duration(100)
-                                           .attr('stroke-width', 4)
-                                           .attr('stroke', 'yellow')
-                                      })
-                                      .on('mouseout', function(d, i) {
-                                         var lithClass = d3.select(this).attr('class');
-                                         d3.selectAll("#" + lithClass)
-                                           .transition()
-                                           .duration(100)
-                                           .attr('stroke-width', 1)
-                                           .attr('stroke', 'black')
-                                      })
-
-        var myText      = descriptions.append("text")
-                                      .text(description)
-                                      .attr('class', lithCode)
-                                      .attr('x', x_legend + legend_box * 1.25)
-                                      .attr('y', y_top + legend_box * 0.5)
-                                      .on('mouseover', function(d, i) {
-                                         var lithClass = d3.select(this).attr('class');
-                                         d3.selectAll("#" + lithClass)
-                                           .transition()
-                                           .duration(100)
-                                           .attr('stroke-width', 4)
-                                           .attr('stroke', 'yellow')
-                                      })
-                                      .on('mouseout', function(d, i) {
-                                         var lithClass = d3.select(this).attr('class');
-                                         d3.selectAll("#" + lithClass)
-                                           .transition()
-                                           .duration(100)
-                                           .attr('stroke-width', 1)
-                                           .attr('stroke', 'black')
-                                      })
-
-        y_top          += legend_box * 1.5
-   }
-  
-   console.log("done addLegend");
+    // Add lithology legend
+    //
+    lithologyLegend(svgContainer, LithologyLegend)
   }
 
-// Min and max
-//
-function get_max_min( min_value, max_value)
-  { 
-   var factor         = 0.01; 
-   var interval_shift = 0.67; 
-   var range          = max_value - min_value; 
-        
-   var interval       = factor; 
-   range              = range / 5.0; 
-        
-   // Determine interval 
-   // 
-   while (range > factor) 
-     { 
-      if(range <= (factor * 1)) 
-        { 
-   	 interval = factor * 1; 
-        } 
-      else if (range <= (factor * 2))
-        { 
-   	 interval = factor * 2; 
-        } 
-      else if (range <= (factor * 2.5))
-        { 
-   	 if(factor < 10.0) 
-           { 
-            interval = factor * 2; 
-           } 
-         else 
-           { 
-            interval = factor * 2.5; 
-           } 
-        } 
-      else if (range <= (factor * 5))
-        { 
-         interval = factor * 5;
-        } 
-      else
-        { 
-         interval = factor * 10;
-        } 
 
-       factor = factor * 10; 
-    } 
+function buildLegend(lithologyData, lithologyDefs) {
 
-   // Maximum
-   //
-   factor = parseInt(max_value / interval); 
-   value  = factor * interval; 
-   if(max_value >= value ) 
-     { 
-      value += interval;
-     } 
-   else if(Math.abs(max_value - value) <= interval_shift * interval) 
-     { 
-      max_value = value + interval; 
-     } 
-   else 
-     { 
-      max_value = value; 
-     } 
+    myLogger.info("buildLegend");
+    myLogger.info(lithologyData);
+    myLogger.info(lithologyDefs);
 
-   // Minimum
-   //
-   factor = parseInt(min_value / interval); 
-   value  = factor * interval; 
-   if(min_value >= value ) 
-     { 
-      value = (factor - 1) * interval; 
-     } 
-   if(Math.abs(min_value - value) <= interval_shift * interval) 
-     { 
-      min_value = value - interval; 
-     } 
-   else 
-     { 
-      min_value = value; 
-     } 
-      
-   return [min_value, max_value, interval];
+    let lithologyLegend = [];
+
+    // Build lithology description
+    //
+    for(let i = 0; i < lithologyData.length; i++) {
+        lithologyData[i]['svg'] = '000';
+        myLithology             = lithologyData[i].lithology;
+        myLogger.info(lithologyData[i]);
+        myLogger.info(`Lithology ${myLithology}`);
+
+        if(lithologyDefs[myLithology]) {
+            lithologyData[i]['svg'] = lithologyDefs[myLithology];
+
+            // Set lithology defintions
+            //
+            if(lithologyLegend.findIndex(x => x.lithology === myLithology) < 0) {
+                lithologyLegend.push({ 'lithology': myLithology, 'symbol': lithologyDefs[myLithology] })
+            }
+        }
+        else {
+            message = `No lithology pattern for ${myLithology}`;
+            myLogger.error(message);
+            updateModal(message);
+            fadeModal(2000);
+        }
+    }
+
+    return lithologyLegend;
   }
 
+function writeDownloadLink(svgContainer, myFile) {
+    const xmlns = "http://www.w3.org/2000/xmlns/";
+    const xlinkns = "http://www.w3.org/1999/xlink";
+    const svgns = "http://www.w3.org/2000/svg";
+    return function serialize(svgContainer) {
+        svg = svg.cloneNode(true);
+        const fragment = window.location.href + "#";
+        const walker = document.createTreeWalker(svg, NodeFilter.SHOW_ELEMENT);
+        while (walker.nextNode()) {
+            for (const attr of walker.currentNode.attributes) {
+                if (attr.value.includes(fragment)) {
+                    attr.value = attr.value.replace(fragment, "#");
+                }
+            }
+        }
+        svg.setAttributeNS(xmlns, "xmlns", svgns);
+        svg.setAttributeNS(xmlns, "xmlns:xlink", xlinkns);
+        const serializer = new window.XMLSerializer;
+        const string = serializer.serializeToString(svg);
+        return new Blob([string], {type: "image/svg+xml"});
+    };
+}
+
+function serialize (svg) {
+  const xmlns = "http://www.w3.org/2000/xmlns/";
+  const xlinkns = "http://www.w3.org/1999/xlink";
+  const svgns = "http://www.w3.org/2000/svg";
+  return function serialize(svg) {
+    svg = svg.cloneNode(true);
+    const fragment = window.location.href + "#";
+    const walker = document.createTreeWalker(svg, NodeFilter.SHOW_ELEMENT);
+    while (walker.nextNode()) {
+      for (const attr of walker.currentNode.attributes) {
+        if (attr.value.includes(fragment)) {
+          attr.value = attr.value.replace(fragment, "#");
+        }
+      }
+    }
+    svg.setAttributeNS(xmlns, "xmlns", svgns);
+    svg.setAttributeNS(xmlns, "xmlns:xlink", xlinkns);
+    const serializer = new window.XMLSerializer;
+    const string = serializer.serializeToString(svg);
+    return new Blob([string], {type: "image/svg+xml"});
+  };
+}
+function downloadSVGAsText() {
+            myLogger.info('downloadSVGAsText');
+  const svg = document.querySelector('svg');
+  const base64doc = btoa(unescape(encodeURIComponent(svg.outerHTML)));
+  const a = document.createElement('a');
+  const e = new MouseEvent('click');
+  a.download = 'download.svg';
+  a.href = 'data:image/svg+xml;base64,' + base64doc;
+  a.dispatchEvent(e);
+}
+function saveSvg() {
+            myLogger.info('saveSvg');
+  const svg = document.querySelector('svg');
+  const base64doc = btoa(unescape(encodeURIComponent(svg.outerHTML)));
+  const a = document.createElement('a');
+  const e = new MouseEvent('click');
+  a.download = 'download.svg';
+  a.href = 'data:image/svg+xml;base64,' + base64doc;
+  a.dispatchEvent(e);
+}
