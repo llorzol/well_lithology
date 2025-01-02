@@ -4,8 +4,8 @@
  * D3_Construction is a JavaScript library to provide a set of functions to build
  *  well construction information in svg format.
  *
- * version 3.13
- * December 22, 2024
+ * version 3.15
+ * December 31, 2024
 */
 
 /*
@@ -100,6 +100,43 @@ function addWellConstruction(svgContainer,
 
                 var toolTip   = ["Seal,", description, "from", top_depth, "to", bot_depth, "feet"].join(" ");
                 var data      = [ {x:x_box_min, tooltip: toolTip}];
+
+                // Check for existing definitions section
+                //
+                let defs = d3.select("defs");
+
+                // Set definitions in svg container if needed
+                //
+                if(defs.size() < 1) {
+                    myLogger.info(`Creating definitions section defs ${defs.size()}`);
+                    defs = svgContainer.append("defs")
+                }
+                else {
+                    myLogger.info(`Appending to definitions section defs ${defs.size()}`);
+                }
+
+                // Set color scale for 3-D shading
+                //
+                let ii       = -0.5
+                let myScale = [];
+                while (ii < 0.5) {
+                    myScale.push(shadeHexColor(color, ii))
+                    ii += 0.1;
+                }
+                var colorScale = d3.scaleLinear()
+                    .range(myScale);
+                
+                let gradient = defs.append('linearGradient')
+                    .attr('id', `gradient${id}`)
+                    .attr("x1", "0%")
+                    .attr("y1", "0%")
+                    .attr("x2", "100%")
+                    .attr("y2", "0%")
+                gradient.selectAll("stop")
+                    .data( colorScale.range() )
+                    .enter().append("stop")
+                    .attr("offset", function(d,i) { return i/(colorScale.range().length-1); })
+                    .attr("stop-color", function(d) { return d; });
                 
                 var Seal = wellBore.append("g")
                     .data(data);
@@ -110,7 +147,7 @@ function addWellConstruction(svgContainer,
                     .attr('y', y_top)
                     .attr('width', width)
                     .attr('height', thickness)
-                    .attr('fill', color)
+                    .attr('fill', `url(#gradient${id})`)
                     .attr('stroke', 'black')
                     .attr('stroke-width', 1)
                     .on("mousemove", function(event, d) {
@@ -199,7 +236,44 @@ function addWellConstruction(svgContainer,
 
                 var toolTip        = ["Casing,", description, "casing diameter", diameter, "inches from", top_depth, "to", bot_depth, "feet"].join(" ");
                 var data           = [ {x:x, tooltip: toolTip}];
+
+                // Check for existing definitions section
+                //
+                let defs = d3.select("defs");
+
+                // Set definitions in svg container if needed
+                //
+                if(defs.size() < 1) {
+                    myLogger.info(`Creating definitions section defs ${defs.size()}`);
+                    defs = svgContainer.append("defs")
+                }
+                else {
+                    myLogger.info(`Appending to definitions section defs ${defs.size()}`);
+                }
+
+                // Set color scale for 3-D shading
+                //
+                let ii       = -0.5
+                let myScale = [];
+                while (ii < 0.5) {
+                    myScale.push(shadeHexColor(color, ii))
+                    ii += 0.1;
+                }
+                var colorScale = d3.scaleLinear()
+                    .range(myScale);
                 
+                let gradient = defs.append('linearGradient')
+                    .attr('id', `gradient${id}`)
+                    .attr("x1", "0%")
+                    .attr("y1", "0%")
+                    .attr("x2", "100%")
+                    .attr("y2", "0%")
+                gradient.selectAll("stop")
+                    .data( colorScale.range() )
+                    .enter().append("stop")
+                    .attr("offset", function(d,i) { return i/(colorScale.range().length-1); })
+                    .attr("stop-color", function(d) { return d; });
+               
                 var Casing = wellBore.append("g")
                     .data(data);
 
@@ -210,7 +284,7 @@ function addWellConstruction(svgContainer,
                     .attr('y', y_top)
                     .attr('width', width)
                     .attr('height', thickness)
-                    .attr('fill', color)
+                    .style('fill', `url(#gradient${id})`)
                     .attr('stroke', 'black')
                     .attr('stroke-width', 1)
                     .on("mousemove", function(event, d) {
