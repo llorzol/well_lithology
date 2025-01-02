@@ -3,8 +3,8 @@
  * A JavaScript library to retrieve the lithology information
  * for a site(s).
  *
- * version 3.23
- * December 22, 2024
+ * version 3.24
+ * January 1, 2025
 */
 
 /*
@@ -223,6 +223,7 @@ function processOwrdLithService(myData, lithologyDefs) {
 
     let myRgbTest   = /^rgb\(0, 0, 0/;
     let myRgbaTest  = /^rgba\(0, 0, 0, 0\)/;
+    let myColorTest = /^\w+$/;
 
     // Parse for lithology information
     //
@@ -331,6 +332,7 @@ function processOwrdLithService(myData, lithologyDefs) {
                     for(let ii = 0; ii < lithologies.length; ii++) {
                         let myColor = lithologies[ii]
                         if(myColor == '&') { continue; }
+                        if(!myColorTest.test(myColor)) { continue; }
                         if(!myColors[myColor]) {
                             $('<div class="' + myColor + '"></div>').appendTo("body");
                             let myRgb = $('.' + myColor).css('background-color');
@@ -402,6 +404,7 @@ function processUsgsLithService(myData, lithologyDefs) {
 
     var myRgbTest   = /^rgb\(0, 0, 0/;
     var myRgbaTest  = /^rgba\(0, 0, 0, 0\)/;
+    let myColorTest = /^\w+$/;
 
     // Parse for lithology information
     //
@@ -509,9 +512,12 @@ function processUsgsLithService(myData, lithologyDefs) {
                 for(let ii = 0; ii < lithologies.length; ii++) {
                     let myColor = lithologies[ii]
                     if(myColor == '&') { continue; }
+                    myLogger.debug(`myColor ${myColor}`);
+                    if(!myColorTest.test(myColor)) { continue; }
+                    myLogger.debug(`myColor ${myColor} ${myColorTest.test(myColor)}`);
                     if(!myColors[myColor]) {
                         $('<div class="' + myColor + '"></div>').appendTo("body");
-                        let myRgb = $('.' + myColor).css('background-color');
+                        let myRgb = $(`.${myColor}`).css('background-color');
                         $('.' + myColor).remove();
                         let myType = typeof myRgb;
                         myLogger.debug(`Color ${myColor} Background-color ${myRgb} Type -> ${myType}`);
