@@ -4,8 +4,8 @@
  * D3_Lithology is a JavaScript library to provide a set of functions to build
  *  well lithology column in svg format.
  *
- * version 3.18
- * December 22, 2024
+ * version 3.19
+ * January 1, 2025
 */
 
 /*
@@ -396,6 +396,21 @@ function addLithology(
 
     let toolTip     = [description, "from", top_depth, "to ?? depth"].join(" ");
     let data        = [ {x:x_box_min, tooltip: toolTip}];
+ 
+    let lithology = svgContainer.append("g")
+        .attr("class", "lastLithology")
+        .data(data)
+
+    let myRect = lithology.append("rect")
+        .attr('id', id)
+        .attr('class', 'lithology')
+        .attr('x', x_box_min)
+        .attr('y', y_top)
+        .attr('width', width)
+        .attr('height', thickness)
+        .attr('fill', `url(#${id})`)
+        .attr('stroke', 'white')
+        .attr('stroke-width', 1)
 
     // Check for existing definitions section
     //
@@ -411,8 +426,8 @@ function addLithology(
         myLogger.info(`Appending to definitions section defs ${defs.size()}`);
     }
    
-    let gradient = defs.append('linearGradient')
-        .attr('id', 'svgGradient')
+    let lastGradient = svgContainer.append('linearGradient')
+        .attr('id', 'lastGradient')
         .attr('x1', '0%')
         .attr('x2', '0%')
         .attr('y1', '0%')
@@ -420,33 +435,27 @@ function addLithology(
         .attr("gradientUnits", "userSpaceOnUse")
         .attr("spreadMethod", "pad");
 
-    gradient.append('svg:stop')
+    lastGradient.append('stop')
         .attr('class', 'start')
         .attr('offset', '0%')
-        .attr('stop-color', 'none')
-        .attr('stop-opacity', 1)
-        .attr('fill', url);
+        .attr('stop-color', 'transparent')
+        .attr('stop-opacity', 1);
 
-    gradient.append('svg:stop')
+    lastGradient.append('stop')
         .attr('class', 'end')
         .attr('offset', '100%')
-        .attr('stop-color', 'none')
-        .attr('stop-opacity', 0)
-        .attr('fill', url);
+        .attr('stop-color', 'white')
+        .attr('stop-opacity', 1);
 
-    let lithology = svgContainer.append("g")
-        .attr("class", "lastLithology")
-        .data(data)
-
-    let myRect = lithology.append("rect")
+    let myLast = lithology.append("rect")
         .attr('id', id)
         .attr('class', 'lithology')
         .attr('x', x_box_min)
         .attr('y', y_top)
         .attr('width', width)
         .attr('height', thickness)
-        .attr('fill', `url(#${id})`)
-        .attr('fill-opacity', 0.25)
+        .attr('fill', 'url(#lastGradient)')
+        .attr('fill-opacity', 1)
         .attr('stroke', 'white')
         .attr('stroke-width', 1)
         .on("mousemove", function(event, d) {
@@ -458,28 +467,6 @@ function addLithology(
         })
         .on("mouseout", function(d){ tooltip.style("display", "none");});
     
-let svg = d3.selectAll('.lastLithology')
-let svgGradient = svg.append("linearGradient")
-
-svgGradient
-    .attr("id", 'gradient')
-    .attr("gradientUnits", "userSpaceOnUse")
-    .attr("spreadMethod", "pad");
-
-svgGradient.append("svg:stop")
-    .attr("offset", "0%")
-    .attr("stop-color", 'black')
-    .attr("stop-opacity", 1);
-
-svgGradient.append("svg:stop")
-    .attr("offset", "100%")
-    .attr("stop-color", 'white')
-    .attr("stop-opacity", 0.1);
-
-svg.style("fill", 'url(#svgGradient)')
-svg.selectAll('path')
-        .style("stroke", 'url(#svgGradient)')
-    
     // Add unknown ?? text to bottom
     //
     let textInfo    = textSize('?-?-?-?-?-?');
@@ -487,12 +474,12 @@ svg.selectAll('path')
     
     let myText = lithology.append("text")
         .attr('x', x_box_min + 0.5 * (x_box_max - x_box_min))
-        .attr('y', y_box_max - (y_box_max - y_bot) * 0.2 - text_height)
+        .attr('y', y_bot + (y_box_max - y_bot) * 0.5 - text_height * 0.5)
         .style("text-anchor", "middle")
         .style("font-family", "sans-serif")
         .style("font-size", "1rem")
-        .style("font-weight", "700")
-        .style("opacity", 0.6)
+        .style("font-weight", "900")
+        .style("opacity", 1)
         .style("fill", 'black')
         .text('?-?-?-?-?-?')
 
