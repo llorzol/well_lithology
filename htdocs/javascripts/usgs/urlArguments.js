@@ -3,8 +3,8 @@
  * Main is a JavaScript library to graph NwisWeb well construction information
  * for a site(s).
  *
- * version 2.02
- * May 30, 2024
+ * version 2.03
+ * December 25, 2024
  */
 
 /*
@@ -31,18 +31,35 @@
 ###############################################################################
 */
 
-function checkSiteId(site_id) {
+var messageSiteNo = [
+    "Incorrectly formatted USGS site number:",
+    "You must use a USGS station number, which is a number",
+    "from 8 to 15 digits long (example 433152121281301)."
+].join(' ');
 
-  var message = "Incorrectly formatted USGS site number or OWRD well log ID or CDWR well number: ";
-  message    += "You must use the USGS station numbers, which are a number ";
-  message    += "from 8 to 15 digits long. ";
-  message    += "You must use the OWRD well log ID, which has a four-character county abbrevation ";
-  message    += "along with from 1 to 7 digit well number. ";
-  message    += "You must use the CDWR well numbers, which are 18-character string well number. ";
+var messageCoopSiteNo = [
+    "Incorrectly formatted OWRD well log ID:",
+    "You must use the OWRD well log ID, which has a four-character county abbrevation",
+    "along with from 1 to 7 padded digit well number (KLAM0050623)."
+].join(' ');
+
+var messageSiteCode = [
+    "Incorrectly formatted CDWR site code:",
+    "You must use the CDWR site codes, which are a alphanumeric",
+    "18 characters long (example 415506N1225446W008)."
+].join(' ');
+
+var messageSiteId = [
+    messageSiteNo,
+    messageCoopSiteNo,
+    messageSiteCode
+].join(' ');
+
+function checkSiteId(site_id) {
                 
     if(!site_id)
       {
-        openModal(message);
+        openModal(messageSiteId);
         fadeModal(10000)
         return null;
       }
@@ -108,54 +125,36 @@ function checkSiteId2(site) {
 
 function checkSiteNo(site_no) {
 
-    if(!site_no)
-      {
-        var message = "Incorrectly formatted USGS site number: ";
-        message    += "You must use the USGS station numbers, which are a number ";
-        message    += "from 8 to 15 digits long (example 433152121281301). ";
-        openModal(message);
-        fadeModal(10000)
-        return false;
-      }
+    if(!site_no) { return false; }
+    
     site_no  = site_no.trim();
     var myRe = /^\d{8,15}$/;
-    if(!myRe.test(site_no))
-      {
-        var message = "Incorrectly formatted USGS site number: ";
-        message    += "You must use the USGS station numbers, which are a number ";
-        message    += "from 8 to 15 digits long (example 433152121281301). ";
-        openModal(message);
-        fadeModal(6000)
-        return false;
-      }
+    if(!myRe.test(site_no)) { return false; }
 
     return site_no;
 }
 
 function checkCoopSiteNo(coop_site_no) {
 
-    if(!coop_site_no)
-      {
-        var message = "Incorrectly formatted OWRD well log ID: ";
-        message    += "You must use the OWRD well log ID, which has a four-character county abbrevation ";
-        message    += "along with from 1 to 7 padded digit well number.";
-        openModal(message);
-        fadeModal(6000)
-        return false;
-      }
+    if(!coop_site_no) { return false; }
     coop_site_no = coop_site_no.trim();
     var myRe = /^([a-z]{4})(\d{7})$/i;
-    if(!myRe.test(coop_site_no))
-      {
-        var message = "Incorrectly formatted OWRD well log ID: ";
-        message    += "You must use the OWRD well log ID, which has a four-character county abbrevation ";
-        message    += "along with from 1 to 7 padded digit well number.";
-        openModal(message);
-        fadeModal(6000)
-        return false;
-      }
+    if(!myRe.test(coop_site_no)) { return false; }
 
     return coop_site_no;
+}
+
+function checkSiteCode(site_code) {
+
+    if(!site_code) { return false; }
+    site_code = site_code.trim();
+    myLogger.info("site_code " + site_code);
+    //var myRe = /^(\d{6})(N|S)+(\d{7})(E|W)+(\d{2})[A-Z]+$/i;
+    var myRe = /^(\d{6})(N|S)+(\d{7})(E|W)+(\d{2})/i;
+    myLogger.info(myRe.test(site_code));
+    if(!myRe.test(site_code)) { return false; }
+
+    return site_code;
 }
 
 function checkProject(project) {
