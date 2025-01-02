@@ -4,8 +4,8 @@
  * d3_AxisFunctions is a JavaScript library to provide a set of functions to build
  *  axes and labelling for well construction and lithology applications in svg format.
  *
- * version 3.07
- * December 22, 2024
+ * version 3.09
+ * December 30, 2024
 */
 
 /*
@@ -343,7 +343,7 @@ function labelWellboreDiameter(
     var text_height = textInfo.height;
 
     label_x          = x_mid;
-    label_y          = y_box_max + text_height * 3;
+    label_y          = y_box_max + text_height * 3.25;
 
     var x_axis_label = svgContainer.append("g")
         .append("text")
@@ -503,7 +503,10 @@ function isNumeric(str) {
   return !isNaN(str) && // use type coercion to parse the string
          !isNaN(parseFloat(str)); // ensure the parsed number is a number
 }
-
+function shadeHexColor(color, percent) {
+    var f=parseInt(color.slice(1),16),t=percent<0?0:255,p=percent<0?percent*-1:percent,R=f>>16,G=f>>8&0x00FF,B=f&0x0000FF;
+    return "#"+(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1);
+}
 
 
 
