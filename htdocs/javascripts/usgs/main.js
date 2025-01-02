@@ -4,8 +4,8 @@
  * Main is a JavaScript library to provide a set of functions to manage
  *  the web requests.
  *
- * version 3.33
- * December 22, 2024
+ * version 3.34
+ * December 26, 2024
 */
 
 /*
@@ -121,11 +121,10 @@ $(document).ready(function() {
         coop_site_no = checkCoopSiteNo(coop_site_no);
 
         if(!coop_site_no) {
-            var message = "Incorrectly formatted OWRD well log ID: ";
-            message    += "You must use the OWRD well log ID, which has a four-character county abbrevation ";
-            message    += "along with from 1 to 7 padded digit well number.";
-            openModal(message);
-            fadeModal(2000);
+            openModal(messageCoopSiteNo);
+            fadeModal(6000);
+
+            jQuery('#wellBore').text(messageCoopSiteNo);
 
             return;
         }
@@ -144,11 +143,30 @@ $(document).ready(function() {
 	site_no = checkSiteNo(site_no);
 
 	if(!site_no) {
-	    var message = "Incorrectly formatted USGS site number: ";
-	    message    += "You must use the USGS site numbers, which are a number ";
-	    message    += "from 8 to 15 digits long (example 433152121281301). ";
-	    openModal(message);
-	    fadeModal(2000);
+	    openModal(messageSiteNo);
+	    fadeModal(6000);
+
+            jQuery('#wellBore').text(messageSiteNo);
+
+	    return;
+	}
+    }
+
+    // Parse
+    //-------------------------------------------------
+    site_code = null;
+    if(url.searchParams.get("site_code")) {
+	site_code = url.searchParams.get("site_code");
+        myLogger.info("Current Url " + window.location.href);
+        myLogger.info("site_code " + site_code);
+
+	site_code = checkSiteCode(site_code);
+
+	if(!site_code) {
+	    openModal(messageSiteCode);
+	    fadeModal(6000);
+
+            jQuery('#wellBore').text(messageSiteCode);
 
 	    return;
 	}
@@ -156,16 +174,11 @@ $(document).ready(function() {
 
     // No site_no nor coop_site_no
     //
-    if(!site_no && !coop_site_no) {
-	let message = "Provide a USGS site number (a number ";
-	message    += " with 8 to 15 digits such as 420733121304001)";
-	message    += " and /or a OWRD well log ID (a four-character county abbrevation";
-        message    += " along with from 1 to 7 padded digit well number such as KLAM0050623).";
-        myLogger.info(message);
-	openModal(message);
-	fadeModal(4000);
+    if(!site_no && !coop_site_no && !site_code) {
+	openModal(messageSiteId);
+	fadeModal(6000);
 
-        jQuery('#wellBore').text(message);
+        jQuery('#wellBore').text(messageSiteId);
 
 	return;
     }
@@ -175,6 +188,7 @@ $(document).ready(function() {
     message  = `Requesting well lithology and construction information for`;
     if(coop_site_no) { message += ` OWRD ${coop_site_no})`; }
     if(site_no) { message += ` USGS ${site_no}`; }
+    if(site_code) { message += ` CDWR ${site_code}`; }
     openModal(message);
     myLogger.debug(message);
 
@@ -315,7 +329,7 @@ $(document).ready(function() {
         // Request for USGS well construction information
         //
         var request_type = "GET";
-        var script_http  = `http://127.0.0.1/cgi-bin/lithology/requestWellConstruction.py?site_no=${site_no}`
+        var script_http  = `http://127.0.0.1/cgi-bin/lithology/requestUsgsConstruction.py?site_no=${site_no}`
         var data_http    = '';
         var dataType     = "json";
 
@@ -379,6 +393,69 @@ $(document).ready(function() {
         }));
     }
 
+    // Request for CDWR information
+    //
+    if(site_code) {
+        // Request for USGS site information
+        //
+        var request_type = "GET";
+        var script_http  = `http://127.0.0.1/cgi-bin/lithology/requestCdwrSites.py?site_code=${site_code}`
+        var script_http  = `https://data.ca.gov/api/3/action/datastore_search_sql?sql=SELECT * from "2708a2e3-23ad-43ed-8c2b-00db7710d16e" WHERE "SITE_CODE" LIKE '${site_code}'`
+        var data_http    = '';
+        var dataType     = "json";
+        var dataType     = "text";
+
+        // Web request
+        //
+        webRequests.push($.ajax( {
+            method:   request_type,
+            url:      script_http,
+            data:     data_http,
+            dataType: dataType,
+            success: function (myData) {
+                myLogger.info(`cdwrSiteInfo`);
+                myLogger.info(myData);
+                usgsSiteInfo = processCdwrSiteService(myData);
+                myLogger.debug(`cdwrSiteInfo`);
+                myLogger.debug(cdwrSiteInfo);
+            },
+            error: function (error) {
+                message = `Failed to load CDWR site information for site code ${site_code} ${error.status} ${error.statusText}`;
+                updateModal(message);
+                fadeModal(2000);
+                failRequest = message;
+            }
+        }));
+        
+        // Request for CDWR construction information
+        //
+        var request_type = "GET";
+        var script_http  = `http://127.0.0.1/cgi-bin/lithology/requestCdwrConstruction.py?site_code=${site_code}`
+        var data_http    = '';
+        var dataType     = "json";
+        var dataType     = "text";
+
+        // Web request
+        //
+        webRequests.push($.ajax( {
+            method:   request_type,
+            url:      script_http,
+            data:     data_http,
+            dataType: dataType,
+            success: function (myData) {
+                usgsSiteInfo = processCdwrSiteService(myData);
+                myLogger.debug(`cdwrSiteInfo`);
+                myLogger.debug(cdwrSiteInfo);
+            },
+            error: function (error) {
+                message = `Failed to load CDWR site information for site code ${site_code} ${error.status} ${error.statusText}`;
+                updateModal(message);
+                fadeModal(2000);
+                failRequest = message;
+            }
+        }));
+    }
+
     // Run ajax requests
     //
     $.when.apply($, webRequests).then(function() {
@@ -398,6 +475,8 @@ $(document).ready(function() {
             openModal(failRequest);
             fadeModal(2000);
             myLogger.error(failRequest);
+
+            jQuery('#wellBore').text(failRequest);
 
             return false;
         }
