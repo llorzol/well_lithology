@@ -1,7 +1,7 @@
 var myConstructionDefs = {
     "title" : "Well Construction project",
-    "version" : "3.02",
-    "version_date" : "December 18, 2024",
+    "version" : "3.03",
+    "version_date" : "December 31, 2024",
   "site_tp_cd": {
     "head_1_tx": "", 
     "english_unit_tx": "TYPE", 
@@ -385,6 +385,7 @@ var myConstructionDefs = {
         "Mesh Screen": "624.svg",
         "Louvered": "620.svg",
         "Perforated": "436-K.svg",
+        "Perforation": "436-K.svg",
         "Screen": "405-K.svg",
         "Wire-wound Screen": "661.svg",
         "Sand Point": "000.svg",
