@@ -5,7 +5,7 @@
  *  well lithology column in svg format.
  *
  * version 3.19
- * January 1, 2025
+ * January 2, 2025
 */
 
 /*
@@ -426,7 +426,7 @@ function addLithology(
         myLogger.info(`Appending to definitions section defs ${defs.size()}`);
     }
    
-    let lastGradient = svgContainer.append('linearGradient')
+    let lastGradient = defs.append('linearGradient')
         .attr('id', 'lastGradient')
         .attr('x1', '0%')
         .attr('x2', '0%')
@@ -478,7 +478,7 @@ function addLithology(
         .style("text-anchor", "middle")
         .style("font-family", "sans-serif")
         .style("font-size", "1rem")
-        .style("font-weight", "900")
+        .style("font-weight", "600")
         .style("opacity", 1)
         .style("fill", 'black')
         .text('?-?-?-?-?-?')
