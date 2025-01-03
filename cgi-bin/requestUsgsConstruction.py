@@ -73,7 +73,7 @@ if HardWired is not None:
     #os.environ['QUERY_STRING'] = 'site_no=452335122564301'
     #os.environ['QUERY_STRING'] = 'site_no=453705119513901'
     #os.environ['QUERY_STRING'] = 'site_no=415947121243401'
-    os.environ['QUERY_STRING'] = 'site_no=422508121161501'
+    os.environ['QUERY_STRING'] = 'site_no=422031121400001'
 
 if 'QUERY_STRING' in os.environ:
     queryString = os.environ['QUERY_STRING']
@@ -105,8 +105,8 @@ else:
 debug           = False
 
 program         = "USGS Well Construction Script"
-version         = "3.06"
-version_date    = "26December2024"
+version         = "3.07"
+version_date    = "03January2025"
 
 program_args    = []
 
@@ -254,9 +254,7 @@ if len(consInfoD) > 0:
         seal_cd          = record['seal_cd']
 
         try:
-            seal_depth_va = float(record['seal_depth_va'])
-            if seal_depth_va > depth_max:
-                depth_max = seal_depth_va
+            seal_depth_va = float(record['seal_depth_va'].strip())
         except:
             seal_depth_va = None
 
