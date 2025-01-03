@@ -4,8 +4,8 @@
  * D3_Construction is a JavaScript library to provide a set of functions to build
  *  well construction information in svg format.
  *
- * version 3.15
- * December 31, 2024
+ * version 3.17
+ * January 3, 2025
 */
 
 /*
@@ -62,7 +62,7 @@ function addWellConstruction(svgContainer,
 
     // wellBore
     //
-    var wellBore   = svgContainer.append("g")
+    let wellBore   = svgContainer.append("g")
         .attr("class", "wellBore")
 
     // Loop through construction
@@ -71,35 +71,35 @@ function addWellConstruction(svgContainer,
 
         // Construction record
         //
-        var wellRecord = wellConstruction.gw_cons;
-        if(wellRecord) {
+        if(wellConstruction.gw_cons) {
+            let = wellRecord = wellConstruction.gw_cons;
 
             // Loop
             //
             myLogger.debug(wellRecord);
             
             for(let i = 0; i < wellRecord.length; i++) {
-                var Record = wellRecord[i];
+                let Record = wellRecord[i];
                 
-                var id           = Record.id;
-                var description  = Record.description;
-                var bottom_depth = Record.bottom_depth;
-                var symbol       = Record.symbol;
-                var color        = Record.color;
+                let id           = Record.id;
+                let description  = Record.description;
+                let bottom_depth = Record.bottom_depth;
+                let symbol       = Record.symbol;
+                let color        = Record.color;
 
-                var top_depth = 0.0;
-                var bot_depth = parseFloat(bottom_depth);
+                let top_depth = 0.0;
+                let bot_depth = parseFloat(bottom_depth);
 
-                var x_mid     = x_box_min + ( x_box_max - x_box_min ) * 0.5;
-                var width     = ( x_box_max - x_box_min ) * 0.8;
-                var x         = x_mid - width * 0.5;
+                let x_mid     = x_box_min + ( x_box_max - x_box_min ) * 0.5;
+                let width     = ( x_box_max - x_box_min ) * 0.8;
+                let x         = x_mid - width * 0.5;
 
-                var y_top     = y_box_min + y_axis * (top_depth - y_min) / y_range
-                var y_bot     = y_box_min + y_axis * (bot_depth - y_min) / y_range
-                var thickness = y_bot - y_top
+                let y_top     = y_box_min + y_axis * (top_depth - y_min) / y_range
+                let y_bot     = y_box_min + y_axis * (bot_depth - y_min) / y_range
+                let thickness = y_bot - y_top
 
-                var toolTip   = ["Seal,", description, "from", top_depth, "to", bot_depth, "feet"].join(" ");
-                var data      = [ {x:x_box_min, tooltip: toolTip}];
+                let toolTip   = ["Seal,", description, "from", top_depth, "to", bot_depth, "feet"].join(" ");
+                let data      = [ {x:x_box_min, tooltip: toolTip}];
 
                 // Check for existing definitions section
                 //
@@ -115,32 +115,38 @@ function addWellConstruction(svgContainer,
                     myLogger.info(`Appending to definitions section defs ${defs.size()}`);
                 }
 
+                // Check for existing definitions section
+                //
+                let newDefs = d3.selectAll(`#gradient${id}`);
+
                 // Set color scale for 3-D shading
                 //
-                let ii       = -0.5
-                let myScale = [];
-                while (ii < 0.5) {
-                    myScale.push(shadeHexColor(color, ii))
-                    ii += 0.1;
+                if(newDefs.size() < 1) {
+                    let ii       = -0.5
+                    let myScale = [];
+                    while (ii < 0.5) {
+                        myScale.push(shadeHexColor(color, ii))
+                        ii += 0.1;
+                    }
+                    var colorScale = d3.scaleLinear()
+                        .range(myScale);
+
+                    let gradient = defs.append('linearGradient')
+                        .attr('id', `gradient${id}`)
+                        .attr("x1", "0%")
+                        .attr("y1", "0%")
+                        .attr("x2", "100%")
+                        .attr("y2", "0%")
+                    gradient.selectAll("stop")
+                        .data( colorScale.range() )
+                        .enter().append("stop")
+                        .attr("offset", function(d,i) { return i/(colorScale.range().length-1); })
+                        .attr("stop-color", function(d) { return d; });
                 }
-                var colorScale = d3.scaleLinear()
-                    .range(myScale);
                 
-                let gradient = defs.append('linearGradient')
-                    .attr('id', `gradient${id}`)
-                    .attr("x1", "0%")
-                    .attr("y1", "0%")
-                    .attr("x2", "100%")
-                    .attr("y2", "0%")
-                gradient.selectAll("stop")
-                    .data( colorScale.range() )
-                    .enter().append("stop")
-                    .attr("offset", function(d,i) { return i/(colorScale.range().length-1); })
-                    .attr("stop-color", function(d) { return d; });
-                
-                var Seal = wellBore.append("g")
+                let Seal = wellBore.append("g")
                     .data(data);
-                var myRect = Seal.append("rect")
+                let myRect = Seal.append("rect")
                     .attr('id', id)
                     .attr('class', 'seal')
                     .attr('x', x)
@@ -163,38 +169,86 @@ function addWellConstruction(svgContainer,
 
         // Hole record
         //
-        var wellRecord = wellConstruction.gw_hole;
-        if(wellRecord) {
+        myLogger.error(' *** Hole record ***');
+        myLogger.error(wellConstruction.gw_hole)
+        if(wellConstruction.gw_hole) {
+            let = wellRecord = wellConstruction.gw_hole;
+            myLogger.error(wellRecord);
+
             for(let i = 0; i < wellRecord.length; i++) {
-                var Record       = wellRecord[i];
+                let Record       = wellRecord[i];
 
-                var top_depth    = parseFloat(Record.top_depth)
-                var bot_depth    = parseFloat(Record.bottom_depth);
-                var diameter     = parseFloat(Record.diameter);
-                var color        = Record.color;
+                let id           = Record.id;
+                let top_depth    = parseFloat(Record.top_depth)
+                let bot_depth    = parseFloat(Record.bottom_depth);
+                let diameter     = parseFloat(Record.diameter);
+                let color        = Record.color;
 
-                var x_mid        = ( x_box_max + x_box_min ) * 0.5;
-                var width        = x_axis * diameter / x_range
-                var x            = x_mid - 0.5 * width
+                let x_mid        = ( x_box_max + x_box_min ) * 0.5;
+                let width        = x_axis * diameter / x_range
+                let x            = x_mid - 0.5 * width
 
-                var y_top        = y_box_min + y_axis * (top_depth - y_min) / y_range
-                var y_bot        = y_box_min + y_axis * (bot_depth - y_min) / y_range
-                var thickness    = y_bot - y_top
+                let y_top        = y_box_min + y_axis * (top_depth - y_min) / y_range
+                let y_bot        = y_box_min + y_axis * (bot_depth - y_min) / y_range
+                let thickness    = y_bot - y_top
 
-                var toolTip      = ["Borehole diameter", diameter, "inches from", top_depth, "to", bot_depth, "feet"].join(" ");
-                var data         = [ {x:x, tooltip: toolTip}];
+                let toolTip      = ["Borehole diameter", diameter, "inches from", top_depth, "to", bot_depth, "feet"].join(" ");
+                let data         = [ {x:x, tooltip: toolTip}];
+
+                // Check for existing definitions section
+                //
+                let defs = d3.select("defs");
+
+                // Set definitions in svg container if needed
+                //
+                if(defs.size() < 1) {
+                    myLogger.info(`Creating definitions section defs ${defs.size()}`);
+                    defs = svgContainer.append("defs")
+                }
+                else {
+                    myLogger.info(`Appending to definitions section defs ${defs.size()}`);
+                }
+
+                // Check for existing definitions section
+                //
+                let newDefs = d3.selectAll(`#gradient${id}`);
+
+                // Set color scale for 3-D shading
+                //
+                if(newDefs.size() < 1) {
+                    let ii       = -0.15
+                    let myScale = [];
+                    while (ii < 0.5) {
+                        myScale.push(shadeHexColor(color, ii))
+                        ii += 0.05;
+                    }
+                    let colorScale = d3.scaleLinear()
+                        .range(myScale);
+
+                    let gradient = defs.append('linearGradient')
+                        .attr('id', `gradient${id}`)
+                        .attr("x1", "0%")
+                        .attr("y1", "0%")
+                        .attr("x2", "100%")
+                        .attr("y2", "0%")
+                    gradient.selectAll("stop")
+                        .data( colorScale.range() )
+                        .enter().append("stop")
+                        .attr("offset", function(d,i) { return i/(colorScale.range().length-1); })
+                        .attr("stop-color", function(d) { return d; });
+                }
                 
-                var Hole = wellBore.append("g")
+                let Hole = wellBore.append("g")
                     .data(data);
 
-                var myRect = Hole.append("rect")
+                let myRect = Hole.append("rect")
                     .attr('id', 'hole')
                     .attr('class', 'hole')
                     .attr('x', x)
                     .attr('y', y_top)
                     .attr('width', width)
                     .attr('height', thickness)
-                    .attr('fill', color)
+                    .attr('fill', `url(#gradient${id})`)
                     .attr('stroke', 'black')
                     .attr('stroke-width', 1)
                     .on("mousemove", function(event, d) {
@@ -211,31 +265,31 @@ function addWellConstruction(svgContainer,
         // Casing record
         //
         myLogger.debug('Casing');
-        var wellRecord = wellConstruction.gw_csng;
-        if(wellRecord) {
+        if(wellConstruction.gw_csng) {
+            let = wellRecord = wellConstruction.gw_csng;
 
             myLogger.debug('Casing record');
             for(let i = 0; i < wellRecord.length; i++) {
-                var Record         = wellRecord[i];
+                let Record         = wellRecord[i];
                 myLogger.debug(Record);
 
-                var id           = Record.id;
-                var top_depth    = parseFloat(Record.top_depth)
-                var bot_depth    = parseFloat(Record.bottom_depth);
-                var diameter     = parseFloat(Record.diameter);
-                var description  = Record.description;
-                var color        = Record.color;
+                let id           = Record.id;
+                let top_depth    = parseFloat(Record.top_depth)
+                let bot_depth    = parseFloat(Record.bottom_depth);
+                let diameter     = parseFloat(Record.diameter);
+                let description  = Record.description;
+                let color        = Record.color;
 
-                var x_mid        = ( x_box_max + x_box_min ) * 0.5;
-                var width        = x_axis * diameter / x_range
-                var x            = x_mid - 0.5 * width
+                let x_mid        = ( x_box_max + x_box_min ) * 0.5;
+                let width        = x_axis * diameter / x_range
+                let x            = x_mid - 0.5 * width
 
-                var y_top          = y_box_min + y_axis * (top_depth - y_min) / y_range
-                var y_bot          = y_box_min + y_axis * (bot_depth - y_min) / y_range
-                var thickness      = y_bot - y_top
+                let y_top          = y_box_min + y_axis * (top_depth - y_min) / y_range
+                let y_bot          = y_box_min + y_axis * (bot_depth - y_min) / y_range
+                let thickness      = y_bot - y_top
 
-                var toolTip        = ["Casing,", description, "casing diameter", diameter, "inches from", top_depth, "to", bot_depth, "feet"].join(" ");
-                var data           = [ {x:x, tooltip: toolTip}];
+                let toolTip        = ["Casing,", description, "casing diameter", diameter, "inches from", top_depth, "to", bot_depth, "feet"].join(" ");
+                let data           = [ {x:x, tooltip: toolTip}];
 
                 // Check for existing definitions section
                 //
@@ -251,33 +305,39 @@ function addWellConstruction(svgContainer,
                     myLogger.info(`Appending to definitions section defs ${defs.size()}`);
                 }
 
+                // Check for existing definitions section
+                //
+                let newDefs = d3.selectAll(`#gradient${id}`);
+
                 // Set color scale for 3-D shading
                 //
-                let ii       = -0.5
-                let myScale = [];
-                while (ii < 0.5) {
-                    myScale.push(shadeHexColor(color, ii))
-                    ii += 0.1;
+                if(newDefs.size() < 1) {
+                    let ii       = -0.5
+                    let myScale = [];
+                    while (ii < 0.5) {
+                        myScale.push(shadeHexColor(color, ii))
+                        ii += 0.1;
+                    }
+                    let colorScale = d3.scaleLinear()
+                        .range(myScale);
+
+                    let gradient = defs.append('linearGradient')
+                        .attr('id', `gradient${id}`)
+                        .attr("x1", "0%")
+                        .attr("y1", "0%")
+                        .attr("x2", "100%")
+                        .attr("y2", "0%")
+                    gradient.selectAll("stop")
+                        .data( colorScale.range() )
+                        .enter().append("stop")
+                        .attr("offset", function(d,i) { return i/(colorScale.range().length-1); })
+                        .attr("stop-color", function(d) { return d; });
                 }
-                var colorScale = d3.scaleLinear()
-                    .range(myScale);
-                
-                let gradient = defs.append('linearGradient')
-                    .attr('id', `gradient${id}`)
-                    .attr("x1", "0%")
-                    .attr("y1", "0%")
-                    .attr("x2", "100%")
-                    .attr("y2", "0%")
-                gradient.selectAll("stop")
-                    .data( colorScale.range() )
-                    .enter().append("stop")
-                    .attr("offset", function(d,i) { return i/(colorScale.range().length-1); })
-                    .attr("stop-color", function(d) { return d; });
                
-                var Casing = wellBore.append("g")
+                let Casing = wellBore.append("g")
                     .data(data);
 
-                var myRect = Casing.append("rect")
+                let myRect = Casing.append("rect")
                     .attr('id', id)
                     .attr('class', 'csng')
                     .attr('x', x)
@@ -299,36 +359,36 @@ function addWellConstruction(svgContainer,
         }
         // Open interval record
         //
-        var wellRecord = wellConstruction.gw_open;
-        if(wellRecord) {
+        if(wellConstruction.gw_open) {
+            let = wellRecord = wellConstruction.gw_open;
 
             for(let i = 0; i < wellRecord.length; i++) {
-                var Record         = wellRecord[i];
+                let Record         = wellRecord[i];
                 myLogger.info('Open interval record');
                 myLogger.info(Record);
 
-                var id           = Record.id;
-                var top_depth    = parseFloat(Record.top_depth)
-                var bot_depth    = parseFloat(Record.bottom_depth);
-                var diameter     = parseFloat(Record.diameter);
-                var description  = Record.description;
-                var symbol       = Record.symbol;
-                var color        = Record.color;
+                let id           = Record.id;
+                let top_depth    = parseFloat(Record.top_depth)
+                let bot_depth    = parseFloat(Record.bottom_depth);
+                let diameter     = parseFloat(Record.diameter);
+                let description  = Record.description;
+                let symbol       = Record.symbol;
+                let color        = Record.color;
 
-                var x_mid          = ( x_box_max + x_box_min ) * 0.5;
-                var width          = x_axis * diameter / x_range
-                var x              = x_mid - 0.5 * width
+                let x_mid          = ( x_box_max + x_box_min ) * 0.5;
+                let width          = x_axis * diameter / x_range
+                let x              = x_mid - 0.5 * width
 
-                var y_top          = y_box_min + y_axis * (top_depth - y_min) / y_range
-                var y_bot          = y_box_min + y_axis * (bot_depth - y_min) / y_range
-                var thickness      = y_bot - y_top
+                let y_top          = y_box_min + y_axis * (top_depth - y_min) / y_range
+                let y_bot          = y_box_min + y_axis * (bot_depth - y_min) / y_range
+                let thickness      = y_bot - y_top
 
-                var toolTip        = ["Open interval,", description, "from", top_depth, "to", bot_depth, "feet"].join(" ");
-                var data           = [ {x:x, tooltip: toolTip}];
+                let toolTip        = ["Open interval,", description, "from", top_depth, "to", bot_depth, "feet"].join(" ");
+                let data           = [ {x:x, tooltip: toolTip}];
                 
-                var Open = wellBore.append("g")
+                let Open = wellBore.append("g")
                     .data(data);
-                var myRect = Open.append("rect")
+                let myRect = Open.append("rect")
                     .attr('id', id)
                     .attr('class', 'open')
                     .attr('x', x)
@@ -422,7 +482,7 @@ function constructionLegend(svgContainer, Legend, myTitle) {
 
     // Check for existing lithology legend
     //
-    var descriptions = d3.select(".legend_descriptions")
+    let descriptions = d3.select(".legend_descriptions")
     myLogger.info("descriptions");
     myLogger.info(descriptions.size());
     if(descriptions.size() > 0) {
