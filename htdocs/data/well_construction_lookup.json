@@ -1,7 +1,7 @@
 var myConstructionDefs = {
     "title" : "Well Construction project",
-    "version" : "3.03",
-    "version_date" : "December 31, 2024",
+    "version" : "3.05",
+    "version_date" : "January 3, 2025",
   "site_tp_cd": {
     "head_1_tx": "", 
     "english_unit_tx": "TYPE", 
@@ -76,7 +76,7 @@ var myConstructionDefs = {
             "Clay": "#FFFF00",
             "Other": "#FF0000",
             "Bentonite": "#FFCC00",
-            "Cement grout": "#33CCFF",
+            "Cement Grout": "#33CCFF",
             "Cement": "#33CCFF",
             "None": "none"
         }, 
@@ -390,7 +390,7 @@ var myConstructionDefs = {
         "Wire-wound Screen": "661.svg",
         "Sand Point": "000.svg",
         "Walled": "000.svg",
-        "Open Hole": "999.svg",
+        "Open Hole": "NL.svg",
         "Other": "000.svg"
     }, 
     "C Number": "C085"
