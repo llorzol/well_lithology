@@ -3,8 +3,8 @@
  * A JavaScript library to retrieve the lithology information
  * for a site(s).
  *
- * version 3.24
- * January 1, 2025
+ * version 3.26
+ * January 3, 2025
 */
 
 /*
@@ -763,7 +763,7 @@ function processOwrdConstructionService(myData, constructionDefs) {
                         'bottom_depth' : bottom_depth,
                         'diameter' : diameter,
                         'symbol' : null,
-                        'color' : 'white',
+                        'color' : '#FFFFFF',
                     });
 
                     // Max/min diameter and depth
@@ -802,8 +802,8 @@ function processOwrdConstructionService(myData, constructionDefs) {
                     let diameter         = Record.diameter;
                     let description      = Record.interval_material;
                     
-                    let color            = null;
-                    let symbol           = '001.svg';
+                    let color            = '#FFFFFF';
+                    let symbol           = null;
 
                     if(!description) { open_ds = "Unknown"; }
                     else {
@@ -826,7 +826,7 @@ function processOwrdConstructionService(myData, constructionDefs) {
                             'bottom_depth' : bottom_depth,
                             'diameter' : diameter,
                             'symbol' : null,
-                            'color' : 'white',
+                            'color' : '#FFFFFF'
                         });
                     }
 
@@ -840,7 +840,7 @@ function processOwrdConstructionService(myData, constructionDefs) {
                         'diameter' : diameter,
                         'description' : description,
                         'symbol': `url(#${symbol})`,
-                        'color': null
+                        'color': color
                     });
 
                     // Max/min diameter and depth
@@ -859,7 +859,7 @@ function processOwrdConstructionService(myData, constructionDefs) {
                             'id': id,
                             'description': legendEntry,
                             'symbol': symbol,
-                            'color': null
+                            'color': color
                         })
                     }
                 }
@@ -1037,7 +1037,7 @@ function processUsgsConstructionService(myData, constructionDefs) {
                             'bottom_depth' : bottom_depth,
                             'diameter' : diameter,
                             'symbol' : null,
-                            'color' : 'white',
+                            'color' : '#FFFFFF',
                         });
 
                         // Max/min diameter and depth
@@ -1163,8 +1163,8 @@ function processUsgsConstructionService(myData, constructionDefs) {
                         let diameter         = Record.open_dia_va;
                         let description      = Record.open_ds;
                         
-                        let color            = null;
-                        let symbol           = '001.svg';
+                        let color            = '#FFFFFF';
+                        let symbol           = null;
 
                         if(!description) { open_ds = "Unknown"; }
                         else {
@@ -1179,7 +1179,9 @@ function processUsgsConstructionService(myData, constructionDefs) {
                             }
                         }
 
-                        let id = `Open_${description.toLowerCase().replace(/\s+/g, '')}`;
+                        let id  = `Open_${description.toLowerCase().replace(/\s+/g, '')}`;
+                        let url = null;
+                        if(symbol) { url = `url(#${symbol})`; }
 
                         // Push record
                         //
@@ -1190,8 +1192,8 @@ function processUsgsConstructionService(myData, constructionDefs) {
                             'bottom_depth' : bottom_depth,
                             'diameter' : diameter,
                             'description' : description,
-                            'symbol': `url(#${symbol})`,
-                            'color': null
+                            'symbol': url,
+                            'color': color
                         });
 
                         // Max/min diameter and depth
@@ -1210,7 +1212,7 @@ function processUsgsConstructionService(myData, constructionDefs) {
                                 'id': id,
                                 'description': legendEntry,
                                 'symbol': symbol,
-                                'color': null
+                                'color': color
                             });
                         }
                     }
