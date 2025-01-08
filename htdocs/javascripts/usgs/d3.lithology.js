@@ -4,8 +4,8 @@
  * D3_Lithology is a JavaScript library to provide a set of functions to build
  *  well lithology column in svg format.
  *
- * version 3.19
- * January 2, 2025
+ * version 3.20
+ * January 7, 2025
 */
 
 /*
@@ -489,8 +489,7 @@ function addLithology(
   }
 
 function buildDefs(svgContainer, lithologyDefs) {
-    myLogger.info("addLegend");
-    myLogger.info(lithologyData);
+    myLogger.info("buildDefs");
     myLogger.info(lithologyDefs);
 
     // Check for existing definitions section
@@ -500,11 +499,11 @@ function buildDefs(svgContainer, lithologyDefs) {
     // Set definitions in svg container if needed
     //
     if(defs.size() < 1) {
-        myLogger.info(`Creating definitions section defs ${defs.size()}`);
+        myLogger.info(`Creating lithology definition section defs ${defs.size()}`);
         defs = svgContainer.append("defs")
     }
     else {
-        myLogger.info(`Appending to definitions section defs ${defs.size()}`);
+        myLogger.info(`Appending to lithology definition section defs ${defs.size()}`);
     }
 
     // Build definitions section
