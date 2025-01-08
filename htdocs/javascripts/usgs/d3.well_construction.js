@@ -4,8 +4,8 @@
  * D3_Construction is a JavaScript library to provide a set of functions to build
  *  well construction information in svg format.
  *
- * version 3.17
- * January 3, 2025
+ * version 3.18
+ * January 7, 2025
 */
 
 /*
@@ -58,7 +58,7 @@ function addWellConstruction(svgContainer,
 
     // Construction legend
     //
-    buildWellDefs(svgContainer, constructionDefs)
+    buildDefs(svgContainer, constructionDefs)
 
     // wellBore
     //
@@ -108,11 +108,11 @@ function addWellConstruction(svgContainer,
                 // Set definitions in svg container if needed
                 //
                 if(defs.size() < 1) {
-                    myLogger.info(`Creating definitions section defs ${defs.size()}`);
+                    myLogger.info(`Creating definitions section seal defs ${defs.size()}`);
                     defs = svgContainer.append("defs")
                 }
                 else {
-                    myLogger.info(`Appending to definitions section defs ${defs.size()}`);
+                    myLogger.info(`Appending to definitions section seal defs ${defs.size()}`);
                 }
 
                 // Check for existing definitions section
@@ -202,11 +202,11 @@ function addWellConstruction(svgContainer,
                 // Set definitions in svg container if needed
                 //
                 if(defs.size() < 1) {
-                    myLogger.info(`Creating definitions section defs ${defs.size()}`);
+                    myLogger.info(`Creating definitions section hole defs ${defs.size()}`);
                     defs = svgContainer.append("defs")
                 }
                 else {
-                    myLogger.info(`Appending to definitions section defs ${defs.size()}`);
+                    myLogger.info(`Appending to definitions section hole defs ${defs.size()}`);
                 }
 
                 // Check for existing definitions section
@@ -298,11 +298,11 @@ function addWellConstruction(svgContainer,
                 // Set definitions in svg container if needed
                 //
                 if(defs.size() < 1) {
-                    myLogger.info(`Creating definitions section defs ${defs.size()}`);
+                    myLogger.info(`Creating definitions section casing defs ${defs.size()}`);
                     defs = svgContainer.append("defs")
                 }
                 else {
-                    myLogger.info(`Appending to definitions section defs ${defs.size()}`);
+                    myLogger.info(`Appending to definitions section casing defs ${defs.size()}`);
                 }
 
                 // Check for existing definitions section
@@ -431,7 +431,7 @@ function addWellConstruction(svgContainer,
 
 function buildWellDefs(svgContainer, constructionDefs) {
     myLogger.info("buildWellDefs");
-    myLogger.debug(constructionDefs);
+    myLogger.info(constructionDefs);
 
     // Check for existing definitions section
     //
@@ -439,7 +439,7 @@ function buildWellDefs(svgContainer, constructionDefs) {
     
     // Set definitions in svg container if needed
     //
-    if(defs.size() < 0) {
+    if(defs.size() < 1) {
         myLogger.info(`Creating definitions section defs ${defs.size()}`);
         defs = svgContainer.append("defs")
     }
@@ -451,13 +451,15 @@ function buildWellDefs(svgContainer, constructionDefs) {
     //
     for(let i = 0; i < constructionDefs.length; i++) {
 
-        let construction = constructionDefs[i].description;
-        let symbol       = constructionDefs[i].symbol;
-        let color        = constructionDefs[i].color;
+        let description = constructionDefs[i].description;
+        let symbol      = constructionDefs[i].symbol;
+        let color       = constructionDefs[i].color;
+        myLogger.info(`Checking definition ${description} symbol ${symbol} color ${color}`);
 
         // Pattern definition
         //
         if(symbol) {
+        myLogger.info(`Adding definition ${description} symbol ${symbol} color ${color}`);
             let pattern = defs.append("pattern")
                 .attr('id', symbol)
                 .attr('patternUnits', 'userSpaceOnUse')
@@ -541,7 +543,7 @@ function constructionLegend(svgContainer, Legend, myTitle) {
         var color       = Record.color;
 
         var url         = 'url(#' + symbol + ')';
-        if(color) { url = color; }
+        if(color && !symbol) { url = color; }
 
         var myRect = descriptions.append("rect")
             .attr('id', 'consEntries')
