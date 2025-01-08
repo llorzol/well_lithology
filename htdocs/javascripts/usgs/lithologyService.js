@@ -3,8 +3,8 @@
  * A JavaScript library to retrieve the lithology information
  * for a site(s).
  *
- * version 3.26
- * January 3, 2025
+ * version 3.27
+ * January 7, 2025
 */
 
 /*
@@ -1023,7 +1023,7 @@ function processUsgsConstructionService(myData, constructionDefs) {
                     if(isNumeric(Record.hole_top_va) && isNumeric(Record.hole_bottom_va) && isNumeric(Record.hole_dia_va)) {
 
                         let cons_seq_nu  = Record.cons_seq_nu;
-                        let hole_seq_nu  = Record.hole_seq_nu;
+                        let hole_seq_nu  = i + 1;
                         let top_depth    = Record.hole_top_va;
                         let bottom_depth = Record.hole_bottom_va;
                         let diameter     = Record.hole_dia_va;
