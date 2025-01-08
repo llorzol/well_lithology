@@ -4,7 +4,7 @@
  * D3_Construction is a JavaScript library to provide a set of functions to build
  *  well construction information in svg format.
  *
- * version 3.18
+ * version 3.19
  * January 7, 2025
 */
 
@@ -395,7 +395,7 @@ function addWellConstruction(svgContainer,
                     .attr('y', y_top)
                     .attr('width', width)
                     .attr('height', thickness)
-                    .attr('fill', symbol)
+                    .attr('fill', `url(#${id})`)
                     .attr('stroke', 'black')
                     .attr('stroke-width', 1)
                     .on("mousemove", function(event, d) {
@@ -427,56 +427,6 @@ function addWellConstruction(svgContainer,
         "Borehole Diameter, inches"
     );
 }
-
-
-function buildWellDefs(svgContainer, constructionDefs) {
-    myLogger.info("buildWellDefs");
-    myLogger.info(constructionDefs);
-
-    // Check for existing definitions section
-    //
-    let defs = d3.select("defs");
-    
-    // Set definitions in svg container if needed
-    //
-    if(defs.size() < 1) {
-        myLogger.info(`Creating definitions section defs ${defs.size()}`);
-        defs = svgContainer.append("defs")
-    }
-    else {
-        myLogger.info(`Appending to definitions section defs ${defs.size()}`);
-    }
-
-    // Build definitions section
-    //
-    for(let i = 0; i < constructionDefs.length; i++) {
-
-        let description = constructionDefs[i].description;
-        let symbol      = constructionDefs[i].symbol;
-        let color       = constructionDefs[i].color;
-        myLogger.info(`Checking definition ${description} symbol ${symbol} color ${color}`);
-
-        // Pattern definition
-        //
-        if(symbol) {
-        myLogger.info(`Adding definition ${description} symbol ${symbol} color ${color}`);
-            let pattern = defs.append("pattern")
-                .attr('id', symbol)
-                .attr('patternUnits', 'userSpaceOnUse')
-                .attr('width', 100)
-                .attr('height', 100)
-
-            let myimage = pattern.append('image')
-                .attr('xlink:href', ["lithology_patterns", symbol].join("/"))
-                .attr('width', 100)
-                .attr('height', 100)
-                .attr('x', 0)
-                .attr('y', 0)
-        }
-    }
-
-    return;
-  }
 
 function constructionLegend(svgContainer, Legend, myTitle) {
     myLogger.info("constructionLegend");
@@ -542,7 +492,7 @@ function constructionLegend(svgContainer, Legend, myTitle) {
         var symbol      = Record.symbol;
         var color       = Record.color;
 
-        var url         = 'url(#' + symbol + ')';
+        var url         = 'url(#' + id + ')';
         if(color && !symbol) { url = color; }
 
         var myRect = descriptions.append("rect")
