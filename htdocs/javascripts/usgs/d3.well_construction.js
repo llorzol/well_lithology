@@ -4,8 +4,8 @@
  * D3_Construction is a JavaScript library to provide a set of functions to build
  *  well construction information in svg format.
  *
- * version 3.19
- * January 7, 2025
+ * version 3.20
+ * January 8, 2025
 */
 
 /*
@@ -98,8 +98,8 @@ function addWellConstruction(svgContainer,
                 let y_bot     = y_box_min + y_axis * (bot_depth - y_min) / y_range
                 let thickness = y_bot - y_top
 
-                let toolTip   = ["Seal,", description, "from", top_depth, "to", bot_depth, "feet"].join(" ");
-                let data      = [ {x:x_box_min, tooltip: toolTip}];
+                let toolTip   = `Seal, ${description} from ${top_depth} to ${bot_depth} feet`
+                let data      = [ {x:x, tooltip: toolTip}];
 
                 // Check for existing definitions section
                 //
@@ -146,6 +146,7 @@ function addWellConstruction(svgContainer,
                 
                 let Seal = wellBore.append("g")
                     .data(data);
+
                 let myRect = Seal.append("rect")
                     .attr('id', id)
                     .attr('class', 'seal')
@@ -192,7 +193,7 @@ function addWellConstruction(svgContainer,
                 let y_bot        = y_box_min + y_axis * (bot_depth - y_min) / y_range
                 let thickness    = y_bot - y_top
 
-                let toolTip      = ["Borehole diameter", diameter, "inches from", top_depth, "to", bot_depth, "feet"].join(" ");
+                let toolTip      = `Borehole diameter ${diameter} inches from ${top_depth} to ${bot_depth} feet`
                 let data         = [ {x:x, tooltip: toolTip}];
 
                 // Check for existing definitions section
@@ -284,12 +285,12 @@ function addWellConstruction(svgContainer,
                 let width        = x_axis * diameter / x_range
                 let x            = x_mid - 0.5 * width
 
-                let y_top          = y_box_min + y_axis * (top_depth - y_min) / y_range
-                let y_bot          = y_box_min + y_axis * (bot_depth - y_min) / y_range
-                let thickness      = y_bot - y_top
+                let y_top        = y_box_min + y_axis * (top_depth - y_min) / y_range
+                let y_bot        = y_box_min + y_axis * (bot_depth - y_min) / y_range
+                let thickness    = y_bot - y_top
 
-                let toolTip        = ["Casing,", description, "casing diameter", diameter, "inches from", top_depth, "to", bot_depth, "feet"].join(" ");
-                let data           = [ {x:x, tooltip: toolTip}];
+                let toolTip      = `Casing, ${description} casing diameter ${diameter} inches from ${top_depth} to ${bot_depth} feet`
+                let data         = [ {x:x, tooltip: toolTip}];
 
                 // Check for existing definitions section
                 //
@@ -383,7 +384,7 @@ function addWellConstruction(svgContainer,
                 let y_bot          = y_box_min + y_axis * (bot_depth - y_min) / y_range
                 let thickness      = y_bot - y_top
 
-                let toolTip        = ["Open interval,", description, "from", top_depth, "to", bot_depth, "feet"].join(" ");
+                let toolTip        = `Open interval, ${description} from ${top_depth} to ${bot_depth} feet`
                 let data           = [ {x:x, tooltip: toolTip}];
                 
                 let Open = wellBore.append("g")
