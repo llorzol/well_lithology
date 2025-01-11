@@ -4,8 +4,8 @@
  * Main is a JavaScript library to provide a set of functions to manage
  *  the web requests.
  *
- * version 3.34
- * December 26, 2024
+ * version 3.36
+ * January 10, 2025
 */
 
 /*
@@ -42,6 +42,7 @@ jQuery('.noJump a').click(function(event){
 //
 jQuery('#printButton').hide();
 jQuery('#viewReport').hide();
+jQuery('#viewConstruction').hide();
 
 // loglevel
 //
@@ -509,6 +510,13 @@ $(document).ready(function() {
             else if(mySiteInfo.hole_depth_va && owrdLithDepth) {
                 if(owrdLithDepth > mySiteInfo.hole_depth_va) { mySiteInfo.hole_depth_va = owrdLithDepth; }
             }
+
+            // Add OWRD Water Well Report
+            //
+            jQuery('#viewReport').show();
+            jQuery("#viewReport").click(function() {
+                viewReport(site_no, coop_site_no, station_nm);
+            });
         }
 
         // USGS lithology information if available and no OWRD
@@ -536,6 +544,15 @@ $(document).ready(function() {
             else if(mySiteInfo.max_dia_va && usgsWellDia) {
                 if(usgsWellDia > mySiteInfo.max_dia_va) { mySiteInfo.max_dia_va = usgsWellDia; }
             }
+
+            // Add USGS construction
+            //
+            jQuery('#viewConstruction').show();
+            jQuery("#viewConstruction").click(function() {
+                downloadWellConstructionData(mySiteInfo,
+                                             myWellConstruction,
+                                             myLithologyInfo)
+            });
         }
 
         // OWRD construction information if available and no USGS
