@@ -4,8 +4,8 @@
  * D3_Lithology is a JavaScript library to provide a set of functions to build
  *  well lithology column in svg format.
  *
- * version 3.20
- * January 7, 2025
+ * version 3.21
+ * January 9, 2025
 */
 
 /*
@@ -230,13 +230,6 @@ function plotLithology([
       'right',
       'Elevation, in feet ' + verticalDatum
     );
-    
-    // Print svg to file
-    //
-    jQuery("#viewReport").click(function() {
-
-        viewReport(site_no, coop_site_no, station_nm);
-    });
     
     // Print svg to file
     //
