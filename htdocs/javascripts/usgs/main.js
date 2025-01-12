@@ -4,8 +4,8 @@
  * Main is a JavaScript library to provide a set of functions to manage
  *  the web requests.
  *
- * version 3.36
- * January 10, 2025
+ * version 3.37
+ * January 11, 2025
 */
 
 /*
@@ -298,7 +298,7 @@ $(document).ready(function() {
         // Request for USGS site information
         //
         var request_type = "GET";
-        var script_http  = `http://127.0.0.1/cgi-bin/lithology/requestUsgsSites.py?site_no=${site_no}`
+        var script_http  = `/cgi-bin/lithology/requestUsgsSites.py?site_no=${site_no}`
         var script_http  = `https://waterservices.usgs.gov/nwis/site/?format=rdb&sites=${site_no}&siteOutput=expanded&siteStatus=all`
         var data_http    = '';
         var dataType     = "json";
@@ -330,7 +330,7 @@ $(document).ready(function() {
         // Request for USGS well construction information
         //
         var request_type = "GET";
-        var script_http  = `http://127.0.0.1/cgi-bin/lithology/requestUsgsConstruction.py?site_no=${site_no}`
+        var script_http  = `/cgi-bin/lithology/requestUsgsConstruction.py?site_no=${site_no}`
         var data_http    = '';
         var dataType     = "json";
 
@@ -364,7 +364,7 @@ $(document).ready(function() {
         // Request for USGS geohydrology information
         //
         var request_type = "GET";
-        var script_http  = `http://127.0.0.1/cgi-bin/lithology/requestUsgsGeohydrology.py?site_no=${site_no}`
+        var script_http  = `/cgi-bin/lithology/requestUsgsGeohydrology.py?site_no=${site_no}`
         var data_http    = '';
         var dataType     = "json";
 
@@ -400,7 +400,7 @@ $(document).ready(function() {
         // Request for USGS site information
         //
         var request_type = "GET";
-        var script_http  = `http://127.0.0.1/cgi-bin/lithology/requestCdwrSites.py?site_code=${site_code}`
+        var script_http  = `/cgi-bin/lithology/requestCdwrSites.py?site_code=${site_code}`
         var script_http  = `https://data.ca.gov/api/3/action/datastore_search_sql?sql=SELECT * from "2708a2e3-23ad-43ed-8c2b-00db7710d16e" WHERE "SITE_CODE" LIKE '${site_code}'`
         var data_http    = '';
         var dataType     = "json";
@@ -431,7 +431,7 @@ $(document).ready(function() {
         // Request for CDWR construction information
         //
         var request_type = "GET";
-        var script_http  = `http://127.0.0.1/cgi-bin/lithology/requestCdwrConstruction.py?site_code=${site_code}`
+        var script_http  = `/cgi-bin/lithology/requestCdwrConstruction.py?site_code=${site_code}`
         var data_http    = '';
         var dataType     = "json";
         var dataType     = "text";
