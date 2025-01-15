@@ -74,6 +74,7 @@ if HardWired is not None:
     #os.environ['QUERY_STRING'] = 'site_no=453705119513901'
     #os.environ['QUERY_STRING'] = 'site_no=415947121243401'
     os.environ['QUERY_STRING'] = 'site_no=445301123054901'
+    os.environ['QUERY_STRING'] = 'site_no=451626122522001'
 
 if 'QUERY_STRING' in os.environ:
     queryString = os.environ['QUERY_STRING']
@@ -105,8 +106,8 @@ else:
 debug           = False
 
 program         = "USGS Geohydrology Script"
-version         = "3.01"
-version_date    = "23December2024"
+version         = "3.02"
+version_date    = "14January2025"
 
 program_args    = []
 
@@ -205,6 +206,8 @@ def processNwisFile (nwisFile, site_no):
                 # Check for sites with no valid location
                 #
                 if tempD[keyColumn] == site_no:
+                    screen_logger.info(tempD)
+                        
                     # Set empty value to None
                     #
                     for key, value in tempD.items():
@@ -236,7 +239,7 @@ def processNwisFile (nwisFile, site_no):
 # -- Main program
 # ----------------------------------------------------------------------
 well_lookup_file = "data/well_construction_lookup.json"
-aqfr_lookup_file = "data/aqfr_cd_query.txt"
+aqfr_lookup_file = "data/codes/aqfr_cd_query.txt"
 
 # Read
 #
@@ -290,6 +293,11 @@ if len(geohInfoD) > 0:
         lith_bottom_va   = record['lith_bottom_va']
         lith_unit_cd     = record['lith_unit_cd']
         lith_ds          = record['lith_ds']
+
+        # Valid record
+        #
+        if lith_cd is None:
+            continue
 
         try:
             lith_top_va = float(record['lith_top_va'])
