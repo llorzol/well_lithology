@@ -4,8 +4,8 @@
  * D3_Construction is a JavaScript library to provide a set of functions to build
  *  well construction information in svg format.
  *
- * version 3.21
- * February 21, 2025
+ * version 3.22
+ * February 22, 2025
 */
 
 /*
@@ -83,15 +83,18 @@ function addWellConstruction(svgContainer,
                 
                 let id           = Record.id;
                 let description  = Record.description;
+                let top_depth    = Record.top_depth;
                 let bottom_depth = Record.bottom_depth;
+                let diameter     = Record.seal_dia_va;
                 let symbol       = Record.symbol;
                 let color        = Record.color;
 
-                let top_depth = 0.0;
+                if(!top_depth) { top_depth = 0.0; }
                 let bot_depth = parseFloat(bottom_depth);
 
                 let x_mid     = x_box_min + ( x_box_max - x_box_min ) * 0.5;
                 let width     = ( x_box_max - x_box_min ) * 0.8;
+                if(diameter) { width = x_axis * diameter / x_range; }
                 let x         = x_mid - width * 0.5;
 
                 let y_top     = y_box_min + y_axis * (top_depth - y_min) / y_range
