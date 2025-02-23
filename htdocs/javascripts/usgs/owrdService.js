@@ -3,7 +3,7 @@
  * A JavaScript library to retrieve the OWRD lithology and construction
  * information for a site(s).
  *
- * version 3.28
+ * version 3.29
  * February 22, 2025
 */
 
@@ -490,7 +490,7 @@ function processOwrdConstructionService(myData, constructionDefs) {
 
             // Open-interval
             //
-            if(feature_type_desc == 'open interval') {
+            if(['open interval', 'filter pack'].includes(feature_type_desc)) {
 
                 // Valid record if has top/bottom depths
                 //
@@ -501,6 +501,7 @@ function processOwrdConstructionService(myData, constructionDefs) {
                     let bottom_depth     = Record.bottom_depth_ft;
                     let diameter         = Record.diameter;
                     let description      = Record.interval_material;
+                    myLogger.info(`Open-interval top ${top_depth} bottom ${bottom_depth} diameter ${diameter} interval_material ${description}`);
                     
                     let color            = '#FFFFFF';
                     let symbol           = null;
@@ -514,11 +515,11 @@ function processOwrdConstructionService(myData, constructionDefs) {
                         description = wordL.join(' ');
                         if(openDict[description]) { symbol = openDict[description]; }
                         else {
-                            myLogger.error(`USGS Casing material ${description} no NWIS code`);
+                            myLogger.error(`USGS Open-interval material ${description} no NWIS code`);
                         }
                     }
 
-                    if(description.includes('Open')) {
+                    if(description.includes('Open') || description.includes('Sand')) {
                         if(!gw_hole) { gw_hole = []; }
                         gw_hole.push({
                             'id' : 1,
