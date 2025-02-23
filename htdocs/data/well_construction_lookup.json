@@ -1,7 +1,7 @@
 var myConstructionDefs = {
     "title" : "Well Construction project",
-    "version" : "3.05",
-    "version_date" : "January 3, 2025",
+    "version" : "3.06",
+    "version_date" : "February 22, 2025",
   "site_tp_cd": {
     "head_1_tx": "", 
     "english_unit_tx": "TYPE", 
@@ -388,7 +388,8 @@ var myConstructionDefs = {
         "Perforation": "436-K.svg",
         "Screen": "405-K.svg",
         "Wire-wound Screen": "661.svg",
-        "Sand Point": "000.svg",
+        "Sand Point": "607.svg",
+        "Sand": "607.svg",
         "Walled": "000.svg",
         "Open Hole": "NL.svg",
         "Other": "000.svg"
